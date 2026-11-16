@@ -88,8 +88,8 @@ export function App({ services = defaultServices }: { services?: ApplicationServ
     let disposed = false;
     const cleanup: Array<() => void> = [];
     for (const [event, handler] of [
-      ["research-download", () => { void loadPapers(true); notify("success", "学校 PDF 下载完成，已处理导入任务"); }],
-      ["research-download-error", (message: string) => notify("error", "学校 PDF 下载未完成", message)],
+      ["research-download", () => { void loadPapers(true); notify("success", "PDF 下载完成，已处理导入任务"); }],
+      ["research-download-error", (message: string) => notify("error", "PDF 下载未完成", message)],
     ] as const) {
       void listen<string>(event, (message) => { if (!disposed) handler(message.payload); }).then((unlisten) => { if (disposed) unlisten(); else cleanup.push(unlisten); });
     }

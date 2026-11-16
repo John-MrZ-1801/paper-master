@@ -93,13 +93,13 @@ export function PaperDetail({ paper, analyzing, onAnalyze, onCancel, onOpen, onD
       </div>
       <div className="detail-scroll">
         <MetadataEditor key={`metadata-${paper.id}`} paper={paper} onSave={onSaveMetadata}/>
-        <section className="author-information overview-section"><h2>作者与关联论文</h2>
-          <dl><dt>全部作者</dt><dd>{(authorContext?.authors ?? paper.authors).join(", ") || "未识别"}</dd><dt>第一作者（署名顺序）</dt><dd>{authorContext?.first_author ?? paper.authors[0] ?? "未识别"}</dd><dt>通信作者</dt><dd>{authorContext?.corresponding_authors.length ? authorContext.corresponding_authors.join(", ") : "原文未识别到明确标注"}</dd></dl>
-          {authorContext?.corresponding_evidence.map((quote, i) => <blockquote key={i}>{quote}</blockquote>)}
-          {authorError && <p role="alert">{authorError}</p>}
-          {authorContext ? <><h3>同作者 / 潜在同课题组论文（当前完整论文库）</h3>{authorContext.related_papers.length ? authorContext.related_papers.map((related) => <div className="related-paper" key={related.id}><button className="text-button" onClick={() => onSelectRelated(related.id)}>{related.title}</button><small>{related.relationship} · {related.shared_authors.join(", ")}</small><small>{related.evidence}</small></div>) : <p>当前库未找到同署名论文。课题组关系需结合通信作者和机构进一步核实。</p>}</> : !authorError && <p>正在读取作者关系…</p>}
-        </section>
-        {paper.abstract && <section className="overview-section"><h2>英文摘要 / Abstract</h2><p>{paper.abstract}</p></section>}
+        <div className="detail-overview-grid">
+          <section className="author-information overview-card"><div className="overview-card-heading"><span>01</span><h2>作者信息</h2></div>
+            <dl><dt>全部作者</dt><dd>{(authorContext?.authors ?? paper.authors).join(", ") || "未识别"}</dd><dt>第一作者</dt><dd>{authorContext?.first_author ?? paper.authors[0] ?? "未识别"}<small>按署名顺序识别</small></dd><dt>通信作者</dt><dd>{authorContext?.corresponding_authors.length ? authorContext.corresponding_authors.join(", ") : "原文未识别到明确标注"}</dd></dl>
+            {authorContext?.corresponding_evidence.map((quote, i) => <blockquote key={i}>{quote}</blockquote>)}
+          </section>
+          {paper.abstract && <section className="overview-card abstract-card"><div className="overview-card-heading"><span>02</span><h2>英文摘要 / Abstract</h2></div><p>{paper.abstract}</p></section>}
+        </div>
         <div className="section-title-row"><h2>论文整理与分析</h2>{paper.analysis && <span className="analysis-version">Schema v{paper.analysis.schema_version}</span>}</div>
         {analyzing && <InlineTaskProgress id={requestId ?? `analysis-auto-${paper.id}`} fallback="等待资源或正在分析，阶段信息将在服务响应时更新。"/>}
         {paper.analysis_status === "queued" && <p role="status">已加入本地分析队列，等待前面的任务完成。</p>}
@@ -107,6 +107,11 @@ export function PaperDetail({ paper, analyzing, onAnalyze, onCancel, onOpen, onD
         {paper.analysis_error && <p role="alert" className="analysis-error">{paper.analysis_error}</p>}
         <AnalysisVersions key={`analysis-${paper.id}`} paper={paper} service={versionsService} onChanged={onChanged}/>
         <AnalysisContent paper={paper}/>
+        <section className="related-papers-section" aria-labelledby="related-papers-heading">
+          <div className="related-papers-heading"><div><span className="eyebrow">LIBRARY CONNECTIONS</span><h2 id="related-papers-heading">同作者 / 潜在同课题组论文</h2><p>基于当前完整论文库的署名与通信作者证据整理，关系仅用于发现线索，仍需人工核实。</p></div>{authorContext && <strong>{authorContext.related_papers.length}</strong>}</div>
+          {authorContext ? authorContext.related_papers.length ? <div className="related-paper-grid">{authorContext.related_papers.map((related) => <article className="related-paper" key={related.id}><span className="related-paper-type">{related.relationship}</span><button className="text-button" onClick={() => onSelectRelated(related.id)}>{related.title}</button><small>{related.shared_authors.length ? `共同署名：${related.shared_authors.join(", ")}` : "未识别到共同署名"}</small><p>{related.evidence}</p><button className="related-paper-open" onClick={() => onSelectRelated(related.id)}>查看论文详情 <span aria-hidden="true">→</span></button></article>)}</div> : <div className="related-paper-empty"><strong>当前库未找到同署名论文</strong><p>潜在课题组关系需要结合通信作者和公开机构信息进一步核实。</p></div> : !authorError && <div className="related-paper-empty"><span className="mini-spinner"/><p>正在读取作者关系…</p></div>}
+          {authorError && <p className="analysis-error" role="alert">{authorError}</p>}
+        </section>
       </div>
     </section>
   );

@@ -24,9 +24,9 @@ export function LibraryCachePanel() {
     } catch (error) { setMessage(normalizeAppError(error).message); }
     finally { setBusy(false); }
   }
-  return <section className="diagnostic-card">
-    <h2>论文文件缓存</h2>
-    <p>分析、结果切换和人工编辑后自动保存，启动时自动补回缺失记录。缓存目录不随应用版本或启动位置改变。</p>
+  return <section className="diagnostic-card cache-card">
+    <div className="diagnostic-card-heading"><div><span>缓存</span><h2>论文文件缓存</h2></div><small>独立于应用版本</small></div>
+    <p className="cache-intro">分析、结果切换和人工编辑后自动保存；启动时只补回缺失记录。</p>
     {desktop ? <>
       <div className="diagnostic-path"><span>缓存文件夹</span><code>{status?.directory ?? "正在读取…"}</code></div>
       {status && <p>格式 v{status.schema_version} · 待同步 {status.pending} 条 · 本次恢复 {status.restored} 条</p>}

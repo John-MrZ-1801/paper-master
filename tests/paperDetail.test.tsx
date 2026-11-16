@@ -9,6 +9,18 @@ import { AnalysisVersionsService } from "../src/services/AnalysisVersionsService
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe("paper detail when switching papers", () => {
+  it("keeps authorship near the overview and moves related papers to the end of the reading flow", async()=>{
+    const repository=new InMemoryPaperRepository();const paper=(await repository.findById("demo-section-aware"))!;
+    const service=new AnalysisVersionsService(repository);const container=document.createElement("div");const root=createRoot(container);const noop=()=>{};
+    try {
+      await act(async()=>{root.render(<PaperDetail paper={paper} analyzing={false} versionsService={service} onChanged={noop} onSaveMetadata={async()=>{}} onAnalyze={noop} onCancel={noop} onOpen={noop} onDelete={noop} onRelink={noop} onSelectRelated={noop} authorContext={{authors:paper.authors,first_author:paper.authors[0],corresponding_authors:[],corresponding_evidence:[],related_papers:[{id:"related",title:"A related paper",shared_authors:[paper.authors[0]],relationship:"同作者",evidence:"共同署名证据"}]}}/>);});
+      const scroll=container.querySelector(".detail-scroll")!;
+      expect(scroll.querySelector(".detail-overview-grid .author-information")?.textContent).toContain("作者信息");
+      expect(scroll.lastElementChild?.classList.contains("related-papers-section")).toBe(true);
+      expect(scroll.lastElementChild?.textContent).toContain("A related paper");
+      expect(scroll.querySelector(".analysis-sections")).not.toBeNull();
+    } finally {await act(async()=>root.unmount());}
+  });
   it("edits every AI field, saves the selected version and restores the generated original", async()=>{
     const repository=new InMemoryPaperRepository();const paper=(await repository.findById("demo-section-aware"))!;
     const service=new AnalysisVersionsService(repository);const container=document.createElement("div");const root=createRoot(container);const noop=()=>{};

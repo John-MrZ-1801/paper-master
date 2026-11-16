@@ -1,3 +1,9 @@
+# v1.0.0 presentation and public boundary
+
+PaperDetail keeps authorship evidence and the abstract in a compact overview, followed by the editable analysis stream. Library-wide same-author / potential-group candidates are a separate final section so relationship discovery does not interrupt reading. RelationshipGraphPage renders local metadata as live SVG; selection derives a weighted direct-neighbor set, emphasizes links by normalized strength, de-emphasizes unrelated nodes and exposes a ranked keyboard-accessible inspector. Static export remains a secondary output of the same source-backed graph.
+
+Settings groups provider connection, explicit network consent and resource limits without changing storage contracts. Diagnostics separates safe aggregate health, actions, cache state and errors. The public runtime uses generic IEEE URLs and contains no institution-specific endpoint or credential viewer. No database migration is required.
+
 # v0.4.5 distribution
 
 The repository now tracks exactly one authorized runtime binary at application/paper-master.exe, plus release.json, SHA256SUMS.txt and README. Embedded frontend resources make this the full Windows application; WebView2 remains an external system runtime or is installed by the offline setup. The root CMD launcher resolves its own directory. GitHub Code/Source archives for new tags include the runnable application.

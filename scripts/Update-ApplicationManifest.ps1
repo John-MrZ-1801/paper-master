@@ -14,7 +14,7 @@ $manifest = [ordered]@{
     launcher = '启动paper-master.cmd'
     bytes = $file.Length
     sha256 = $digest
-    runtime = 'Microsoft Edge WebView2 (installed separately or by the setup installer)'
+    runtime = 'Microsoft Edge WebView2 (installed separately)'
     personal_data_included = $false
 }
 $utf8 = [Text.UTF8Encoding]::new($false)

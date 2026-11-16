@@ -6,7 +6,7 @@ use schemars::{schema_for, JsonSchema};
 use serde::{Deserialize, Serialize};
 use tokio_util::sync::CancellationToken;
 
-pub const IEEE_VPN_ROOT: &str = "https://vpn.njupt.edu.cn:8443/https/webvpned711636132b9949da34311b3bedcdf8d511a58163cbec54e12d044aba79f071";
+pub const IEEE_ROOT: &str = "https://ieeexplore.ieee.org";
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
 #[serde(rename_all = "snake_case")]
@@ -104,9 +104,8 @@ pub fn ieee_article_url(value: &str) -> AppResult<url::Url> {
     Ok(url)
 }
 
-pub fn vpn_url(ieee_url: &str) -> AppResult<String> {
-    let url = ieee_article_url(ieee_url)?;
-    Ok(format!("{IEEE_VPN_ROOT}{}", url.path()))
+pub fn ieee_browse_url(ieee_url: &str) -> AppResult<String> {
+    Ok(ieee_article_url(ieee_url)?.to_string())
 }
 
 pub fn public_pdf_url(value: &str) -> AppResult<url::Url> {
@@ -391,9 +390,11 @@ pub async fn download_observed(
         .get(url)
         .send()
         .await
-        .map_err(|_| failed("PDF 下载连接失败，请使用学校 WebVPN 页面。"))?;
+        .map_err(|_| failed("PDF 下载连接失败，请在 IEEE 或系统浏览器中核实来源。"))?;
     if !response.status().is_success() {
-        return Err(failed("公开下载被拒绝，请使用学校 WebVPN 登录下载。"));
+        return Err(failed(
+            "公开下载被拒绝；受限全文请使用你自己的机构访问方式。",
+        ));
     }
     const MAX_SIZE: usize = 80 * 1024 * 1024;
     if response
@@ -423,7 +424,7 @@ pub async fn download_observed(
     observer(data.len() as u64, total);
     if !data.starts_with(b"%PDF-") {
         return Err(failed(
-            "服务器返回的不是 PDF，可能需要学校登录。未将登录页作为论文保存。",
+            "服务器返回的不是 PDF，可能需要机构访问。未将登录页作为论文保存。",
         ));
     }
     std::fs::create_dir_all(destination).map_err(|_| failed("无法创建论文下载目录。"))?;
@@ -455,9 +456,10 @@ mod tests {
         }
         assert!(public_pdf_url("https://127.0.0.1/private.pdf").is_err());
         assert!(public_pdf_url("https://arxiv.org/pdf/2401.00001").is_ok());
-        assert!(vpn_url("https://ieeexplore.ieee.org/document/1234")
-            .unwrap()
-            .ends_with("/document/1234"));
+        assert_eq!(
+            ieee_browse_url("https://ieeexplore.ieee.org/document/1234").unwrap(),
+            "https://ieeexplore.ieee.org/document/1234"
+        );
     }
     #[test]
     fn relationship_filters_do_not_fall_back_to_topic_only_and_recompute_shared_names() {

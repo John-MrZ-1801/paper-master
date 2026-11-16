@@ -31,6 +31,5 @@ export class ResearchService {
   openWebVpn(ieeeUrl?: string) { return invokeCommand<void>("open_ieee_webvpn", { ieeeUrl }); }
   openExternal(ieeeUrl?: string) { return invokeCommand<void>("open_ieee_external", { ieeeUrl }); }
   openRelationshipSource(url: string) { return invokeCommand<void>("open_relationship_source", { url }); }
-  openCredentials() { return invokeCommand<void>("open_webvpn_credentials"); }
   cancel(requestId: string) { return invokeCommand<boolean>("cancel_ai_request", { requestId }); }
 }

@@ -1,3 +1,7 @@
+# Current release: v1.0.0 initial launch (2026-11-15)
+
+Initial public milestone: reading-first paper details, relevance-focused interactive relationship graphs, grouped Settings and Diagnostics, and a sanitized public distribution without personal contact details, machine-specific paths or institution-specific endpoints. Database schema and existing local data remain unchanged. The next version requires an explicit user decision.
+
 # Current release: v0.4.5 (2026-10-27)
 
 Next target: v0.4.6. Distribution-only maintenance: retain a complete authorized EXE in Git, add a root launcher and clear opening instructions, publish a portable package, and enforce explicit package allowlists. Application behavior stays at the v0.4.4 baseline.

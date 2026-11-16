@@ -42,7 +42,7 @@ export function ResearchPage({ service, paperService, initialReferenceId, deskto
     try { await action(); } catch (error) { setError(normalizeAppError(error).message); }
   }
   return <main className="page-shell research-page">
-    <header className="page-header"><div><h1>联网检索论文</h1><p>描述你要找的论文、作者或课题组，Codex 理解需求后检索 IEEE。</p></div><div className="research-actions"><button className="button secondary" disabled={!desktop} onClick={() => void act(() => service.openExternal())}>系统浏览器</button><button className="button secondary" disabled={!desktop} onClick={() => void act(() => service.openWebVpn())}>学校 IEEE / WebVPN</button></div></header>
+    <header className="page-header"><div><h1>联网检索论文</h1><p>描述你要找的论文、作者或课题组，Codex 理解需求后检索 IEEE。</p></div><div className="research-actions"><button className="button secondary" disabled={!desktop} onClick={() => void act(() => service.openExternal())}>系统浏览器</button><button className="button secondary" disabled={!desktop} onClick={() => void act(() => service.openWebVpn())}>隔离 IEEE 窗口</button></div></header>
     <section className="settings-panel research-search">
       <p>先在<button className="text-button" onClick={onSettings}>设置</button>中启用 Codex 联网授权。检索会发送你的需求及所选参考论文的题名和作者信息，不发送参考论文全文。</p>
       <form onSubmit={(event) => { event.preventDefault(); if (!requestId && desktop && request.trim()) void search(); }}>
@@ -52,7 +52,7 @@ export function ResearchPage({ service, paperService, initialReferenceId, deskto
         <select className="research-reference" id="research-reference" value={referenceId} disabled={!!requestId} onChange={(event) => setReferenceId(event.target.value)}><option value="">不使用本地参考论文</option>{references.map((paper) => <option value={paper.id} key={paper.id}>{paper.title} · {paper.authors[0] ?? "作者未识别"}</option>)}</select>
         <div className="research-search-row"><select aria-label="候选篇数" disabled={!!requestId} value={limit} onChange={(event) => setLimit(Number(event.target.value))}>{[3,6,10,12].map((value) => <option value={value} key={value}>{value} 篇</option>)}</select><button className="button primary" disabled={!desktop || !request.trim() || !!requestId}><SparkIcon/>{requestId ? "理解与检索中…" : "理解需求并检索"}</button>{requestId && <button type="button" className="button secondary" onClick={() => void cancel()}>取消</button>}</div>
       </form>
-      <p className="research-note">学校订阅论文：打开内置 WebVPN 窗口，登录后在 IEEE 点击 PDF 下载，完成后尝试自动导入。该下载流程为试验功能；若仅打开阅读页，可将 PDF 保存后手动导入。浏览器会话可能需要独立登录。<button className="text-button" disabled={!desktop} onClick={() => void act(() => service.openCredentials())}>查看本机私有凭据 TXT</button></p>
+      <p className="research-note">受限全文请通过 IEEE 页面使用你自己的机构访问方式。隔离窗口不会读取系统浏览器会话，也不保存或展示单位凭据；若自动下载不可用，请保存 PDF 后手动导入。</p>
       {!desktop && <p role="status">联网检索和文件下载需在桌面应用使用。</p>}
       {progressId&&<InlineTaskProgress id={progressId}/>}
       {downloadProgressId&&<InlineTaskProgress id={downloadProgressId}/>}
@@ -64,7 +64,7 @@ export function ResearchPage({ service, paperService, initialReferenceId, deskto
       <h2>{paper.title}</h2><p>{paper.authors.join(", ") || "作者信息待核实"}</p><p className="research-quality">{paper.quality_reason}</p>
       <p className="research-relationship"><strong>{{topic_similar:"主题相似",shared_author:"同署名作者（身份待核实）",potential_group:"潜在同课题组（待核实）"}[paper.relationship]}</strong>{paper.matched_authors.length ? ` · 共同署名：${paper.matched_authors.join(", ")}` : ""}</p><p>{paper.relationship_evidence}</p>{paper.relationship_sources.length > 0 && <details><summary>作者 / 团队关系来源</summary>{paper.relationship_sources.map((url,i) => <p className="research-source-url" key={url}><button className="text-button" onClick={() => void act(() => service.openRelationshipSource(url))}>查看关系来源 {i+1}</button><small>{url}</small></p>)}</details>}
       {paper.doi && <small>DOI: {paper.doi}</small>}
-      <div className="research-actions"><button className="button primary" disabled={!desktop} onClick={() => void act(() => service.openWebVpn(paper.ieee_url))}>学校权限下载（试验）</button><button className="button secondary" disabled={!desktop} onClick={() => void act(() => service.openExternal(paper.ieee_url))}>在系统浏览器查看来源</button>{paper.open_pdf_url && <button className="button secondary" disabled={!!downloading} onClick={() => void act(async () => {
+      <div className="research-actions"><button className="button primary" disabled={!desktop} onClick={() => void act(() => service.openWebVpn(paper.ieee_url))}>在隔离窗口查看</button><button className="button secondary" disabled={!desktop} onClick={() => void act(() => service.openExternal(paper.ieee_url))}>在系统浏览器查看来源</button>{paper.open_pdf_url && <button className="button secondary" disabled={!!downloading} onClick={() => void act(async () => {
         setDownloading(paper.ieee_url);
         const downloadId=taskId("download");setDownloadProgressId(downloadId);
         try { const summary = await service.download(paper.open_pdf_url,downloadId); onImported(); if (summary.failed.length) throw new Error(summary.failed[0].message); setNotice(`已下载并导入 ${summary.imported.length} 篇论文。`); }

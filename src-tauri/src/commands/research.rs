@@ -224,10 +224,10 @@ pub async fn open_ieee_webvpn(
 ) -> AppResult<()> {
     require_online(&database)?;
     let target = match ieee_url {
-        Some(value) => research::vpn_url(&value)?,
-        None => format!("{}/Xplore/home.jsp", research::IEEE_VPN_ROOT),
+        Some(value) => research::ieee_browse_url(&value)?,
+        None => research::IEEE_ROOT.to_string(),
     };
-    let url = url::Url::parse(&target).map_err(|_| error("WebVPN 地址无效。"))?;
+    let url = url::Url::parse(&target).map_err(|_| error("IEEE 地址无效。"))?;
     if let Some(window) = app.get_webview_window("ieee-webvpn") {
         window
             .navigate(url)
@@ -243,15 +243,15 @@ pub async fn open_ieee_webvpn(
     let profile = std::env::var_os("LOCALAPPDATA")
         .map(std::path::PathBuf::from)
         .ok_or_else(|| error("无法定位本机私有会话目录。"))?
-        .join("paper-master-private/webvpn-browser");
-    std::fs::create_dir_all(&profile).map_err(|_| error("无法创建 WebVPN 私有会话目录。"))?;
+        .join("paper-master-private/ieee-browser");
+    std::fs::create_dir_all(&profile).map_err(|_| error("无法创建 IEEE 私有会话目录。"))?;
     let pending_downloads = std::sync::Mutex::new(std::collections::HashMap::<
         String,
         std::collections::VecDeque<String>,
     >::new());
     // This external window has no Tauri IPC capability. Credentials/cookies stay in its browser profile.
     WebviewWindowBuilder::new(&app, "ieee-webvpn", WebviewUrl::External(url))
-        .title("IEEE · 南京邮电大学 WebVPN（试验下载窗口）")
+        .title("IEEE · 隔离访问窗口")
         .inner_size(1200.0, 850.0)
         .data_directory(profile)
         .on_navigation({
@@ -260,16 +260,16 @@ pub async fn open_ieee_webvpn(
                 let allowed = require_online(navigation_app.state::<Database>().inner()).is_ok();
                 allowed
                     && url.scheme() == "https"
-                    && url.host_str() == Some("vpn.njupt.edu.cn")
-                    && url.port() == Some(8443)
+                    && url.host_str() == Some("ieeexplore.ieee.org")
+                    && url.port().is_none()
             }
         })
         .on_new_window(move |url, _| {
             // IEEE PDF links often use target=_blank. Keep them in the same controlled window
             // so the download callback and authenticated browser session are retained.
             if url.scheme() == "https"
-                && url.host_str() == Some("vpn.njupt.edu.cn")
-                && url.port() == Some(8443)
+                && url.host_str() == Some("ieeexplore.ieee.org")
+                && url.port().is_none()
             {
                 if let Some(window) = popup_app.get_webview_window("ieee-webvpn") {
                     let _ = window.navigate(url);
@@ -284,8 +284,8 @@ pub async fn open_ieee_webvpn(
                         return false;
                     }
                     if url.scheme() != "https"
-                        || url.host_str() != Some("vpn.njupt.edu.cn")
-                        || url.port() != Some(8443)
+                        || url.host_str() != Some("ieeexplore.ieee.org")
+                        || url.port().is_some()
                     {
                         return false;
                     }
@@ -307,7 +307,7 @@ pub async fn open_ieee_webvpn(
                         TaskProgress::running(
                             &id,
                             "download",
-                            "学校浏览器正在下载（无字节进度接口）",
+                            "IEEE 窗口正在下载（无字节进度接口）",
                         ),
                     );
                 }
@@ -333,7 +333,7 @@ pub async fn open_ieee_webvpn(
                         .to_string();
                     emit_progress(
                         &app,
-                        TaskProgress::running(&id, "download", "学校 PDF 下载结束，正在校验与导入"),
+                        TaskProgress::running(&id, "download", "PDF 下载结束，正在校验与导入"),
                     );
                     tauri::async_runtime::spawn(async move {
                         use std::io::Read;
@@ -354,7 +354,7 @@ pub async fn open_ieee_webvpn(
                                         TaskProgress::running(
                                             &id,
                                             "download",
-                                            "学校 PDF 下载并导入完成",
+                                            "PDF 下载并导入完成",
                                         )
                                         .finish("completed"),
                                     );
@@ -430,13 +430,13 @@ pub async fn open_ieee_webvpn(
                     if let Some(id) = id {
                         emit_progress(
                             webview.app_handle(),
-                            TaskProgress::running(&id, "download", "学校浏览器下载已取消或中断")
+                            TaskProgress::running(&id, "download", "IEEE 窗口下载已取消或中断")
                                 .finish("failed"),
                         );
                         let _ = webview.app_handle().emit_to(
                             "main",
                             "research-download-error",
-                            "学校浏览器下载已取消或中断，请检查登录状态后重试。",
+                            "IEEE 窗口下载已取消或中断，请检查访问状态后重试。",
                         );
                     }
                 }
@@ -445,7 +445,7 @@ pub async fn open_ieee_webvpn(
             true
         })
         .build()
-        .map_err(|_| error("无法打开 WebVPN 窗口。请使用系统浏览器访问学校 IEEE 入口。"))?;
+        .map_err(|_| error("无法打开 IEEE 隔离窗口。请改用系统浏览器访问。"))?;
     Ok(())
 }
 
@@ -457,8 +457,8 @@ pub fn open_ieee_external(
 ) -> AppResult<()> {
     require_online(&database)?;
     let target = match ieee_url {
-        Some(value) => research::vpn_url(&value)?,
-        None => format!("{}/Xplore/home.jsp", research::IEEE_VPN_ROOT),
+        Some(value) => research::ieee_browse_url(&value)?,
+        None => research::IEEE_ROOT.to_string(),
     };
     app.opener()
         .open_url(target, None::<&str>)
@@ -476,21 +476,6 @@ pub fn open_relationship_source(
     app.opener()
         .open_url(url.as_str(), None::<&str>)
         .map_err(|_| error("无法打开作者关系来源。"))
-}
-
-#[tauri::command]
-pub fn open_webvpn_credentials(app: tauri::AppHandle) -> AppResult<()> {
-    let path = std::env::var_os("LOCALAPPDATA")
-        .map(std::path::PathBuf::from)
-        .ok_or_else(|| error("无法定位当前用户私有目录。"))?
-        .join("paper-master-private/webvpn.txt");
-    if !path.is_file() {
-        return Err(error("本机未配置凭据文件。请在 %LOCALAPPDATA%\\paper-master-private\\webvpn.txt 中单独配置，不要放进工程或迁移包。"));
-    }
-    // Opens the private file locally; its contents never cross IPC or enter an AI prompt.
-    app.opener()
-        .open_path(path.to_string_lossy().to_string(), None::<&str>)
-        .map_err(|_| error("无法打开私有凭据 TXT。"))
 }
 
 #[cfg(test)]

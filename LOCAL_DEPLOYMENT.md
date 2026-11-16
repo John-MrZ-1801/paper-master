@@ -1,4 +1,4 @@
-# v0.4.5 直接启动（2026-10-27）
+# v1.0.0 直接启动（2026-11-15）
 
 根目录双击启动paper-master.cmd，或直接运行application/paper-master.exe。正式版EXE已纳入仓库白名单，Code ZIP解压后同样可用。无WebView2的新电脑使用Release中的离线运行时安装器。
 
@@ -21,18 +21,18 @@ Run `application/paper-master.exe` or `pwsh -File scripts/Start-Local.ps1`. Netw
 
 # 本机部署与使用
 
-本机源码目录：`D:\paper-master\paper-master`。保留迁移包、Git 历史和交接时已有的未提交文档改动。
+源码目录以当前仓库检出位置为准。保留迁移包、Git 历史和交接时已有的未提交文档改动。
 
 ## 启动
 
-2026-10-23 更新：本机版增加 Codex 联网检索/阅读总结、作者关系、摘要修复和 PDF 打开修复。使用 Codex 时可直接打开 `application\\paper-master-local.exe`，或在下述命令添加 `-SkipLocalModel` 以跳过 LM Studio 初始化。学校订阅下载为试验功能，见 `问题清单/2026-10-23-联网检索与下载问题清单.md`。学校凭据只在 `%LOCALAPPDATA%\\paper-master-private\\webvpn.txt`，不在本项目内。
+2026-11-15 更新：v1.0.0 保留 Codex 联网检索/阅读总结、作者关系、摘要修复和 PDF 打开能力。公开代码不再包含特定单位入口、凭据查看器或单位域名；受限全文请在 IEEE 或系统浏览器中使用用户自己的机构访问方式。
 
 推荐在 PowerShell 7 中执行：
 
 本机还提供桌面快捷方式 **paper-master（本机版）**，调用相同的启动脚本。
 
 ```powershell
-cd D:\paper-master\paper-master
+cd <你的 paper-master 仓库目录>
 pwsh -NoProfile -File .\scripts\Start-Local.ps1
 ```
 

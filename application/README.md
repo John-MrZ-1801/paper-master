@@ -1,4 +1,4 @@
-# 完整应用：paper-master v0.4.5
+# 完整应用：paper-master v1.0.0
 
 本目录已包含可以直接运行的正式版 `paper-master.exe`，不是下载占位文件。Windows 10/11 x64 用户无需安装开发工具。
 
@@ -6,7 +6,7 @@
 
 1. 先把仓库 ZIP 或免安装包完整解压。
 2. 双击仓库/解压目录根部的 **启动paper-master.cmd**，或直接双击本目录 **paper-master.exe**。
-3. 如果系统缺少 WebView2，请改用 [Release 中含离线组件的安装程序](https://github.com/xiao-john-zhao/paper-master/releases/latest)。
+3. 如果系统缺少 WebView2，请先从 [Microsoft WebView2 官方页面](https://developer.microsoft.com/microsoft-edge/webview2/) 安装运行时，再重新启动应用。
 
 本目录的 `release.json` 记录版本、平台、文件大小和 SHA-256；`SHA256SUMS.txt` 可用于校验程序。打包时核对文件版本、项目版本及构建摘要，避免混入旧程序。
 

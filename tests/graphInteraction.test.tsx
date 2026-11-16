@@ -25,6 +25,9 @@ it("redraws vector coordinates with fixed glyph sizes and isolates a selected ne
     expect(container.querySelector(".graph-node text")!.getAttribute("font-size")).toBe(before.font);
     expect(container.querySelector('[data-testid="graph-coordinate-layer"]')!.hasAttribute("transform")).toBe(false);
     await act(async()=>container.querySelector<SVGGElement>('[aria-label="查看关键词：资源分配"]')!.dispatchEvent(new MouseEvent("click",{bubbles:true})));
+    expect(container.querySelector(".graph-neighbor-list")?.textContent).toContain("通信感知");
+    expect(container.querySelector(".graph-strength-label")?.textContent).toBe("100%");
+    expect(container.querySelector<SVGGElement>('[aria-label="查看关键词：独立主题"]')!.getAttribute("opacity")).toBe("0.06");
     await act(async()=>container.querySelector<HTMLInputElement>(".graph-inspector input")!.click());
     expect(container.querySelectorAll(".graph-node")).toHaveLength(2);
     await act(async()=>[...container.querySelectorAll("button")].find(b=>b.textContent==="聚焦此节点")!.click());

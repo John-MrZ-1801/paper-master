@@ -7,6 +7,15 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $env:Path = "$(Join-Path $env:USERPROFILE '.cargo\bin');$env:Path"
 # Avoid competing with a locally loaded model for all available RAM during compilation.
 $env:CARGO_BUILD_JOBS = '2'
+# Keep developer account and checkout paths out of release panic/debug strings.
+$rustFlagSeparator = [char]0x1f
+$encodedRustFlags = @()
+if ($env:CARGO_ENCODED_RUSTFLAGS) {
+    $encodedRustFlags += $env:CARGO_ENCODED_RUSTFLAGS -split $rustFlagSeparator
+}
+$encodedRustFlags += "--remap-path-prefix=$($env:USERPROFILE)=.rust-build"
+$encodedRustFlags += "--remap-path-prefix=$projectRoot=paper-master"
+$env:CARGO_ENCODED_RUSTFLAGS = $encodedRustFlags -join $rustFlagSeparator
 Push-Location $projectRoot
 try {
     & (Join-Path $PSScriptRoot 'Check-Version.ps1')

@@ -1,10 +1,20 @@
+# v1.0.0 初步上线版验证（2026-11-16）
+
+- 版本一致性：`scripts/Check-Version.ps1` 通过，npm、Cargo、Tauri、应用内版本及 `Cargo.lock` 均为 `1.0.0`。
+- 前端：Vitest 36 项通过；TypeScript 检查通过；Vite 生产构建通过，共转换 153 个模块。新增回归覆盖详情页底部关联论文区、图谱关联排名/强度和无关节点淡出。
+- 后端：`cargo test --locked --manifest-path src-tauri/Cargo.toml` 在正常权限下 93 项通过、0 失败、7 项实时外部测试 ignored。受限沙箱的首次运行有 17 项因回环端口及临时目录 `PermissionDenied` 失败，不是断言回归。
+- Windows 产物：`scripts/Build-Local.ps1 -NoInstaller` 完成全部测试、前端生产构建和 Rust release 构建，更新 `application/paper-master.exe`、`release.json` 与 SHA-256。`scripts/New-ReleasePackage.ps1 -PortableOnly` 生成 Windows x64 免安装包。
+- 安装器限制：完整构建在下载 NSIS 3.11 工具时长期无进度，已中止；本版不发布 NSIS 安装器，也没有复用或改名旧版本安装器。下载说明仅指向实际存在的免安装包。
+- 隐私检查：公开源码树移除个人联系邮箱、本机绝对检出路径、特定单位名称/域名和单位专用凭据入口；通用在线入口只保留官方 IEEE 地址。正式构建使用 `--remap-path-prefix` 清除依赖调试字符串中的开发者用户目录与检出路径，新 EXE 对这些固定字符串扫描无命中。个人论文、数据库、缓存、密钥、模型、登录状态和临时构建目录不进入发布包。
+- 视觉验证限制：Codex 内置浏览器不可用，随后用户按 Esc 停止了原生电脑控制，因此没有完成桌面截图级视觉验收；未再启动电脑控制。组件回归、TypeScript、生产构建和后端测试均已通过。
+
 # 仓库公开前检查（2026-11-06）
 
-远端为 main 与 v0.4.3/v0.4.4/v0.4.5 三个标签；对应历史已包含在本机审计中。扫描全部 25 个提交的 646 个历史 blob（25,509,862 字节），检查常见提供商令牌、私钥、凭据赋值与个人文件路径。没有真实凭据或个人论文/数据库/缓存文件；唯一密钥赋值为测试占位 `test-only-key`。EXE 内的 `C:\Users\1\.cargo\registry\src\...` 是依赖构建路径，不是登录资料。没有需要撤销的已发现密钥，也没有为此改写历史。
+远端历史曾完成常见提供商令牌、私钥、凭据赋值与个人文件路径审计；没有发现真实凭据、个人论文、数据库或缓存文件，唯一密钥赋值为测试占位 `test-only-key`。v1.0.0 进一步移除公开树中的个人联系邮箱、本机绝对检出路径和特定单位名称/域名。
 
 三个 Release 的 14 个附件逐一核对 GitHub SHA-256 与本机副本，全部一致；四个 ZIP 的 CRC、文件列表及常见密钥模式检查通过。没有数据库、论文、环境文件、私钥或缓存目录。GitHub 没有 PR、Actions 运行、Wiki 或 Pages。详细审计结果保存在本机忽略目录 handoff/validation，不上传个人文件。自动模式扫描无法证明不存在任何未知格式的敏感信息。
 
-`pnpm test`：35 项通过；`pnpm build`：通过（153 模块）；`cargo test --locked --manifest-path src-tauri/Cargo.toml`：93 项通过、7 项外部实时测试 ignored。Rust 首次在受限沙箱内失败（17 项，本机模拟 HTTP 与临时缓存目录权限受限，首个可操作错误为 PermissionDenied）；正常权限下重跑退出码 0。未调用真实在线模型或访问真实个人资料库。邮箱仅存在于 README 末尾 HTML 注释；前端源文件与构建产物不包含该邮箱。
+`pnpm test`：35 项通过；`pnpm build`：通过（153 模块）；`cargo test --locked --manifest-path src-tauri/Cargo.toml`：93 项通过、7 项外部实时测试 ignored。Rust 首次在受限沙箱内失败（17 项，本机模拟 HTTP 与临时缓存目录权限受限，首个可操作错误为 PermissionDenied）；正常权限下重跑退出码 0。未调用真实在线模型或访问真实个人资料库。
 
 # v0.4.5 完整应用分发验证（2026-10-27）
 

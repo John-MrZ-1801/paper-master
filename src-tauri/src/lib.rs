@@ -72,7 +72,6 @@ pub fn run() {
             commands::research::open_ieee_webvpn,
             commands::research::open_ieee_external,
             commands::research::open_relationship_source,
-            commands::research::open_webvpn_credentials,
             commands::import::import_papers,
             commands::settings::get_settings,
             commands::settings::save_settings,

@@ -1,6 +1,6 @@
 # paper-master
 
-Windows 本地优先论文管理器，当前版本 **v0.4.5**（2026-10-27）。使用 Tauri 2、React、TypeScript、Rust 和 SQLite。
+Windows 本地优先论文管理器，当前版本 **v1.0.0 初步上线版**（2026-11-16）。使用 Tauri 2、React、TypeScript、Rust 和 SQLite。
 
 本人自用，出于爱好开发，不保证能解决所有问题。
 
@@ -10,19 +10,20 @@ Windows 本地优先论文管理器，当前版本 **v0.4.5**（2026-10-27）。
 
 | 你下载的内容 | 打开方式 |
 | --- | --- |
-| [免安装启动包（较小）](https://github.com/xiao-john-zhao/paper-master/releases/download/v0.4.5/paper-master-v0.4.5-portable-windows-x64.zip) | 解压，双击 `启动paper-master.cmd`；系统需已有 WebView2 |
-| [Windows 安装程序（含离线运行时）](https://github.com/xiao-john-zhao/paper-master/releases/download/v0.4.5/paper-master_0.4.5_x64-setup.exe) | 双击安装，然后从开始菜单打开 paper-master |
-| [安装器分享包](https://github.com/xiao-john-zhao/paper-master/releases/download/v0.4.5/paper-master-v0.4.5-windows-x64.zip) | 解压，先双击里面的 `_x64-setup.exe` |
-| 仓库右上方 **Code → Download ZIP** 或 `git clone` | 从 v0.4.5 起自带完整正式版 EXE，解压后同样双击根目录启动脚本 |
+| [免安装启动包（较小）](https://github.com/xiao-john-zhao/paper-master/releases/download/v1.0.0/paper-master-v1.0.0-portable-windows-x64.zip) | 解压，双击 `启动paper-master.cmd`；系统需已有 WebView2 |
+| 仓库右上方 **Code → Download ZIP** 或 `git clone` | v1.0.0 源码归档自带完整正式版 EXE，解压后同样双击根目录启动脚本 |
 
-**缺少 WebView2 时优先选择安装程序**，它包含离线安装组件。不要在压缩包内部直接运行。更早版本的 Source code ZIP 可能只有源码；请下载当前版本。公开仓库可直接下载，无需受邀账号。
+v1.0.0 初步上线版仅提供免安装包。缺少 WebView2 时，请先从 [Microsoft WebView2 官方页面](https://developer.microsoft.com/microsoft-edge/webview2/) 安装运行时。不要在压缩包内部直接运行。更早版本的 Source code ZIP 可能只有源码；请下载当前版本。公开仓库可直接下载，无需受邀账号。
 
 [快速开始](快速开始.txt) · [完整中文使用指南](docs/下载安装使用指南.md) · [查看全部发布附件](https://github.com/xiao-john-zhao/paper-master/releases/latest)
 
-仓库 `application/` 保留当前正式版 `paper-master.exe`、版本清单与校验值。Release 同时保留安装器、免安装启动包和完整安装器分享包。个人论文、数据库、密钥、缓存、临时文件、模型、构建目录和旧版 EXE 备份均不随应用上传。
+仓库 `application/` 保留当前正式版 `paper-master.exe`、版本清单与校验值。Release 提供免安装启动包与 SHA-256 校验文件。个人论文、数据库、密钥、缓存、临时文件、模型、构建目录和旧版 EXE 备份均不随应用上传。
 
 ## 本版功能
 
+- **阅读优先的详情页**：作者身份与摘要并列呈现，论文分析保持连续阅读；同作者 / 潜在同课题组论文统一收束在页面底部，并明确证据与待核实边界。
+- **交互式关系图**：浏览器端实时 SVG 布局；选择主题或论文后按关联强度突出直接邻域、淡出无关内容，并在侧栏提供关联排名与一键切换，不依赖静态图片。
+- **分组设置与状态诊断**：Settings 按服务、隐私和资源上限分组；Diagnostics 提供数据库、本地 AI、资料库覆盖率总览，以及独立缓存与错误明细。
 - **页面状态保留**：运行期间切换资料库、设置、联网检索、关系图等页面，保留未保存输入、结果、视野和进行中任务。对比窗口的“×”改为暂时收起，可从侧栏返回；只有明确点击取消才停止任务。草稿仅保留在本次运行内存中，退出前仍需保存。
 
 - **编辑 AI 结果**：在论文详情选择分析版本后点击“编辑 AI 分析内容”，修改全部九类字段；保留生成原文和各模型版本，保存后更新搜索与文件缓存。
@@ -76,6 +77,4 @@ pnpm tauri build --ci -- --locked
 - [排错](DEBUGGING.md)
 - [更新日志](CHANGELOG.md)
 
-旧版本实施记录保留在 `docs/` 和 Git 历史中。下一维护目标为 v0.4.6。
-
-<!-- 本人自用，出于爱好开发，有问题联系2024010132@njupt.edu.cn，不一定能解决 -->
+旧版本实施记录保留在 `docs/` 和 Git 历史中。v1.0.0 为初步上线版，后续版本号与范围另行决定。
