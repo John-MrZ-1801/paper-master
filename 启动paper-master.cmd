@@ -4,7 +4,7 @@ setlocal
 if not exist "%~dp0application\paper-master.exe" (
   echo 未找到完整应用：application\paper-master.exe
   echo 请先解压完整下载包，或从下方 Release 下载 Windows 安装器。
-  echo https://github.com/xiao-john-zhao/paper-master/releases/latest
+  echo https://github.com/John-MrZ-1801/paper-master/releases/latest
   pause
   exit /b 1
 )

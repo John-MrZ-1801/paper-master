@@ -10,12 +10,12 @@ Windows 本地优先论文管理器，当前版本 **v1.0.0 初步上线版**（
 
 | 你下载的内容 | 打开方式 |
 | --- | --- |
-| [免安装启动包（较小）](https://github.com/xiao-john-zhao/paper-master/releases/download/v1.0.0/paper-master-v1.0.0-portable-windows-x64.zip) | 解压，双击 `启动paper-master.cmd`；系统需已有 WebView2 |
+| [免安装启动包（较小）](https://github.com/John-MrZ-1801/paper-master/releases/download/v1.0.0/paper-master-v1.0.0-portable-windows-x64.zip) | 解压，双击 `启动paper-master.cmd`；系统需已有 WebView2 |
 | 仓库右上方 **Code → Download ZIP** 或 `git clone` | v1.0.0 源码归档自带完整正式版 EXE，解压后同样双击根目录启动脚本 |
 
 v1.0.0 初步上线版仅提供免安装包。缺少 WebView2 时，请先从 [Microsoft WebView2 官方页面](https://developer.microsoft.com/microsoft-edge/webview2/) 安装运行时。不要在压缩包内部直接运行。更早版本的 Source code ZIP 可能只有源码；请下载当前版本。公开仓库可直接下载，无需受邀账号。
 
-[快速开始](快速开始.txt) · [完整中文使用指南](docs/下载安装使用指南.md) · [查看全部发布附件](https://github.com/xiao-john-zhao/paper-master/releases/latest)
+[快速开始](快速开始.txt) · [完整中文使用指南](docs/下载安装使用指南.md) · [查看全部发布附件](https://github.com/John-MrZ-1801/paper-master/releases/latest)
 
 仓库 `application/` 保留当前正式版 `paper-master.exe`、版本清单与校验值。Release 提供免安装启动包与 SHA-256 校验文件。个人论文、数据库、密钥、缓存、临时文件、模型、构建目录和旧版 EXE 备份均不随应用上传。
 
