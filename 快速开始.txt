@@ -13,14 +13,14 @@ Windows 10/11 x64 用户：
 直接运行需要系统已安装 Microsoft Edge WebView2。
 
 【系统没有 WebView2】
-v1.0.0 初步上线版仅提供免安装包。请先从 Microsoft 官方页面安装
+v1.0.1 功能维护版仅提供免安装包。请先从 Microsoft 官方页面安装
 Microsoft Edge WebView2 Runtime，然后重新启动 paper-master：
 https://developer.microsoft.com/microsoft-edge/webview2/
 
 【不要下载错】
 - portable-windows-x64.zip：免安装启动包，解压后直接打开。
 - GitHub 的 Code → Download ZIP / 当前版本 Source code ZIP：
-  v1.0.0 包含源码、启动脚本和 application/paper-master.exe。
+  v1.0.1 包含源码、启动脚本和 application/paper-master.exe。
 - 更早版本的源码 ZIP 可能只有源代码，请使用当前版本。
 
 【AI 功能】

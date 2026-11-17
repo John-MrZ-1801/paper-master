@@ -1,4 +1,4 @@
-# 完整应用：paper-master v1.0.0
+# 完整应用：paper-master v1.0.1
 
 本目录已包含可以直接运行的正式版 `paper-master.exe`，不是下载占位文件。Windows 10/11 x64 用户无需安装开发工具。
 

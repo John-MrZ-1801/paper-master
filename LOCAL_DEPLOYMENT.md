@@ -1,6 +1,6 @@
-# v1.0.0 直接启动（2026-11-15）
+# v1.0.1 直接启动（2026-11-17）
 
-根目录双击启动paper-master.cmd，或直接运行application/paper-master.exe。正式版EXE已纳入仓库白名单，Code ZIP解压后同样可用。无WebView2的新电脑使用Release中的离线运行时安装器。
+根目录双击启动paper-master.cmd，或直接运行application/paper-master.exe。正式版EXE已纳入仓库白名单，Code ZIP解压后同样可用。系统缺少 WebView2 时，请先安装微软官方运行时。
 
 构建：scripts/Build-Local.ps1；分发：scripts/New-ReleasePackage.ps1。输出同时含安装器分享包及免安装启动包，均从新暂存目录按白名单生成，不包含本机缓存或数据。
 
@@ -25,7 +25,7 @@ Run `application/paper-master.exe` or `pwsh -File scripts/Start-Local.ps1`. Netw
 
 ## 启动
 
-2026-11-15 更新：v1.0.0 保留 Codex 联网检索/阅读总结、作者关系、摘要修复和 PDF 打开能力。公开代码不再包含特定单位入口、凭据查看器或单位域名；受限全文请在 IEEE 或系统浏览器中使用用户自己的机构访问方式。
+2026-11-17 更新：v1.0.1 保留 Codex 联网检索/阅读总结、作者关系、摘要修复和 PDF 打开能力，并新增独立 AI 评分与响应式工作区。公开代码不包含特定单位入口、凭据查看器或单位域名；受限全文请在 IEEE 或系统浏览器中使用用户自己的机构访问方式。
 
 推荐在 PowerShell 7 中执行：
 

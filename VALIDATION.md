@@ -1,9 +1,11 @@
-# 未发布维护验证（2026-11-17）
+# v1.0.1 功能维护版验证（2026-11-17）
 
+- 版本一致性：`scripts/Check-Version.ps1` 通过，npm、Cargo、Tauri、应用内版本及 `Cargo.lock` 均为 `1.0.1`。
 - 前端：`pnpm test` 9 个测试文件、40 项全部通过；覆盖时间 / 名称 / 第一作者排序、单关键词创新分排序、评分 Schema 及既有导航回归。生产构建通过，Vite 转换 157 个模块。
 - 后端：`cargo test --locked --manifest-path src-tauri/Cargo.toml` 在正常权限下 95 项通过、0 失败、7 项真实外部服务测试 ignored。新增回归覆盖加权总分重算、关键词完整性、评分人工修订冲突、原始 AI 评分保留和模式 11 迁移；受限沙箱中的回环端口失败在正常权限重跑后全部通过。
 - 数据与界面：数据库模式 11、缓存格式 3 兼容读取格式 1、2。Windows Edge 本地预览实际完成 AI 评分，确认总分位于作者上方、分项 / 亮点 / 缺陷 / 关键词分显示正常；单关键词筛选后出现对应创新分升降序选项，评分按钮显示“AI 评分”。
-- Windows 产物：`scripts/Build-Local.ps1 -NoInstaller` 退出码 0，重跑前后端全部检查并生成 release EXE。`application/paper-master.exe` 为 19,823,616 字节，SHA-256 为 `307acad9cd72f7553764f564c841a8fecd6f0e5b6ffeb6f49ede523f9b43a180`；`release.json` 与 `SHA256SUMS.txt` 已同步。未构建安装器，版本号保持 1.0.0。
+- Windows 产物：`scripts/Build-Local.ps1 -NoInstaller` 退出码 0，重跑前后端全部检查并生成 v1.0.1 release EXE。`application/paper-master.exe` 为 19,823,616 字节，SHA-256 为 `fab3a15432f58a887e7e00533f34dbabaddbc9337b9e4e74923642767d990f68`；`release.json` 与 `SHA256SUMS.txt` 已同步。旧版程序仍在运行时，脚本保留旧进程和忽略目录备份，没有强制结束用户程序。
+- 分发包：`scripts/New-ReleasePackage.ps1 -PortableOnly` 退出码 0；`paper-master-v1.0.1-portable-windows-x64.zip` 为 7,122,873 字节，SHA-256 为 `ea5661d3c7e12ca50395608e4ec12c6acbeb0495762fabbddc66e9a0c74e272c`。ZIP 仅含正式应用、启动脚本、清单、中文说明、可选 LM Studio 安装入口和校验文件。未构建或发布 NSIS 安装器。
 - 清理与隐私：删除过期问题清单，构建脚本不再在 application 留下重复的版本号 EXE；application 仅保留正式 EXE、README 和两份清单。已扫描待提交源码、跟踪 / 新增路径、邮箱、本机检出路径、常见令牌 / 私钥前缀、凭据赋值及新 EXE；未发现真实密钥、个人路径、论文、数据库、缓存或凭据文件。源码命中仅为测试占位 `test-only-key`、示例邮箱、公开仓库地址、通用演示路径和期刊名称测试字符串。
 
 # v1.0.0 初步上线版验证（2026-11-16）

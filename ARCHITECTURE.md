@@ -1,4 +1,4 @@
-# 2026-11-17 independent scoring and responsive workspace
+# v1.0.1 independent scoring and responsive workspace
 
 - Scoring is a separate application flow from analysis. `commands/scoring.rs` builds the same bounded source material but calls the provider scoring contract, validates a score-only JSON schema and persists it in migration 11's `paper_scores` table. Optimistic revisions protect manual edits; the original generated baseline is retained for restoration.
 - The authoritative overall score is recalculated as innovation 37%, rigor 32%, reference value 23% and publication venue 8%. Venue rank or indexing is never invented when the source does not identify a venue. Highlights and deficiencies are limited to one or two items, and every current paper keyword receives a separate innovation score that is not part of the overall score.
