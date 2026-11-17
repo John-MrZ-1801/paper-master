@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { paperAnalysisSchema, paperComparisonSchema } from "../src/domain/ai/types";
+import { paperAnalysisSchema, paperComparisonSchema, paperScoreSchema } from "../src/domain/ai/types";
 
 describe("AI response schemas", () => {
   it("accepts the versioned structured analysis contract", () => {
@@ -71,5 +71,12 @@ describe("AI response schemas", () => {
       evidence: [{ paper_number: 1, quote: "A sufficiently long source evidence quote." }],
       summary: "Summary",
     }).success).toBe(true);
+  });
+
+  it("validates strict paper and keyword scores independently from analysis",()=>{
+    const result=paperScoreSchema.parse({schema_version:"1",overall_score:65,innovation_score:64,rigor_score:68,reference_value_score:63,venue_score:60,highlights:["方法可复现。"],deficiencies:["验证范围有限。"],keyword_scores:[{keyword:"ISAC",innovation_score:58}],provider:"mock",model:"m",generated_at:"now",updated_at:"now",revision:0,edited:false});
+    expect(result.keyword_scores[0].innovation_score).toBe(58);
+    expect(()=>paperScoreSchema.parse({...result,venue_score:101})).toThrow();
+    expect(()=>paperScoreSchema.parse({...result,deficiencies:[]})).toThrow();
   });
 });

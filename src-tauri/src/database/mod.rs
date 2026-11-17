@@ -3,6 +3,7 @@ mod cache_location;
 pub mod library_cache;
 pub mod migrations;
 pub mod paper_repository;
+pub mod paper_scores;
 pub mod settings_storage;
 
 use rusqlite::Connection;

@@ -55,11 +55,16 @@ impl<'connection> SqlitePaperRepository<'connection> {
             .connection
             .prepare(PAPER_SELECT)
             .map_err(|error| read_error("Could not prepare paper query", error))?;
-        let papers = statement
+        let mut papers = statement
             .query_map([], map_paper)
             .map_err(|error| read_error("Could not read papers", error))?
             .collect::<Result<Vec<_>, _>>()
             .map_err(|error| read_error("A stored paper record is invalid", error))?;
+        if super::paper_scores::table_exists(self.connection) {
+            for paper in &mut papers {
+                paper.score = super::paper_scores::get(self.connection, &paper.id)?;
+            }
+        }
         Ok(papers)
     }
 
@@ -98,6 +103,9 @@ impl PaperRepository for SqlitePaperRepository<'_> {
                 AppError::new(ErrorCode::DuplicatePaper, "This PDF is already in the library.").detail(error.to_string())
             } else { write_error("Could not insert paper", error) }
         })?;
+        if let Some(score) = &paper.score {
+            super::paper_scores::restore_cached(self.connection, &paper.id, score)?;
+        }
         Ok(paper.clone())
     }
 
@@ -118,6 +126,9 @@ impl PaperRepository for SqlitePaperRepository<'_> {
                 "The paper no longer exists in the library.",
             ));
         }
+        if let Some(score) = &paper.score {
+            super::paper_scores::restore_cached(self.connection, &paper.id, score)?;
+        }
         Ok(paper.clone())
     }
 
@@ -134,7 +145,12 @@ impl PaperRepository for SqlitePaperRepository<'_> {
             .prepare(&format!("{PAPER_SELECT} WHERE id=?1"))
             .map_err(|error| read_error("Could not prepare paper lookup", error))?;
         match statement.query_row([id], map_paper) {
-            Ok(paper) => Ok(Some(paper)),
+            Ok(mut paper) => {
+                if super::paper_scores::table_exists(self.connection) {
+                    paper.score = super::paper_scores::get(self.connection, &paper.id)?;
+                }
+                Ok(Some(paper))
+            }
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
             Err(error) => Err(read_error("Could not read paper", error)),
         }
@@ -252,6 +268,7 @@ fn map_paper(row: &Row<'_>) -> rusqlite::Result<Paper> {
         analysis,
         analysis_provider: row.get(24)?,
         tags,
+        score: None,
         analysis_status: row.get(15)?,
         analysis_error: row.get(16)?,
         pdf_diagnostics: match diagnostics_json {
@@ -427,6 +444,7 @@ mod tests {
             analysis: None,
             analysis_provider: None,
             tags: vec!["local LLM".into()],
+            score: None,
             analysis_status: "not_analyzed".into(),
             analysis_error: None,
             pdf_diagnostics: None,

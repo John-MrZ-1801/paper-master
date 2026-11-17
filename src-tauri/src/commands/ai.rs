@@ -1249,6 +1249,7 @@ mod tests {
             analysis: None,
             analysis_provider: None,
             tags: tags.iter().map(|tag| (*tag).to_string()).collect(),
+            score: None,
             analysis_status: "not_analyzed".into(),
             analysis_error: None,
             pdf_diagnostics: None,

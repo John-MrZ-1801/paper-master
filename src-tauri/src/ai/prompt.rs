@@ -21,12 +21,27 @@ pub const REPAIR_ANALYSIS_PROMPT: &str = r#"根据随附论文内容，将下面
 
 pub const REPAIR_COMPARISON_PROMPT: &str = r#"按系统提示和原始论文材料修复比较 JSON。必须保留所有 Schema 字段，schema_version 为“2”，每条差异同时引用至少两个“论文N”编号，覆盖全部论文。evidence 每篇至少一条，从对应 source_excerpt 逐字复制连续原文（20–180 字符），不得改写。叙述用简体中文。证据不足须明示，不得编造。只返回 JSON。"#;
 
+pub const SCORE_SYSTEM_PROMPT: &str = r#"你是极其严格的学术论文评审。只依据提供的论文材料评分，不得把写作流畅、热门主题或模型不确定性当作高分理由。所有分数均为 0–100 的整数。
+
+分别评估：innovation_score（相对已知工作的新颖程度）、rigor_score（问题定义、方法、实验和结论的严谨程度）、reference_value_score（对后续研究可复用、可核验的参考价值）、venue_score（期刊或会议档次）。overall_score 必须等于 round(innovation_score*0.37 + rigor_score*0.32 + reference_value_score*0.23 + venue_score*0.08)。刊出主体占 8%；只有输入中有可靠刊名或会名时才能结合通行学术声誉评分，不得臆测分区、排名、录用率或索引状态；未识别时从严给分并在缺陷中说明。
+
+评分必须压低：90–100 仅限具有领域级突破且证据极强的罕见论文；80–89 为明显领先且验证充分；70–79 为扎实但非突破；60–69 为有用但常规；50–59 存在明显欠缺；低于 50 表示创新、论证或可复用性有实质问题。材料不完整时不能猜测，应在严谨性和参考价值中扣分。
+
+highlights 与 deficiencies 各写 1–2 条最关键、具体的简体中文结论。keyword_scores 必须逐项覆盖用户给出的关键词，每个 innovation_score 只表示该论文在该关键词语境下的创新性，与论文总分及三个总评分项相互独立。schema_version 固定为“1”。不得输出推理过程、思维链、Markdown 或 Schema 以外字段。"#;
+
+pub const REPAIR_SCORE_PROMPT: &str = r#"修复为严格的论文评分 JSON：全部分数为 0–100 整数；亮点和缺陷各 1–2 条简体中文；关键词必须与给定列表逐项一致、不得增删或改名；总分使用 37% 创新性、32% 严谨性、23% 参考价值、8% 期刊/会议档次并四舍五入。只返回 JSON。"#;
+
 pub fn build_analysis_user_prompt(input: &str) -> String {
     format!("论文内容开始\n{input}\n论文内容结束\n请只返回符合 API 结构化响应 Schema 的简体中文最终结果。英文论文的每个标签都应采用中文术语（原文连续术语）格式，括号中的英文术语必须在以上论文内容中逐字出现，不要自行构造缩写。")
 }
 
 pub fn build_comparison_user_prompt(input: &str) -> String {
     format!("多篇论文材料开始\n{input}\n多篇论文材料结束\n请结合结构化分析与原文证据，返回简体中文差异对比 JSON。")
+}
+
+pub fn build_score_user_prompt(input: &str, keywords: &[String]) -> String {
+    let keywords = serde_json::to_string(keywords).unwrap_or_else(|_| "[]".into());
+    format!("论文材料开始\n{input}\n论文材料结束\n本篇论文关键词（必须逐项评分）：{keywords}\n请返回严格评分 JSON。")
 }
 
 #[cfg(test)]

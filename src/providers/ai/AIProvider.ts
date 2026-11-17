@@ -1,5 +1,5 @@
-import type { PaperAnalysisResult } from "../../domain/paper/Paper";
-import type { AnalysisRequest, CompareRequest, ConnectionResult, PaperComparisonResult } from "../../domain/ai/types";
+import type { PaperAnalysisResult, PaperScore } from "../../domain/paper/Paper";
+import type { AnalysisRequest, CompareRequest, ConnectionResult, PaperComparisonResult, ScoreRequest } from "../../domain/ai/types";
 import type { AppSettings } from "../../settings/types";
 
 export interface AIProvider {
@@ -8,6 +8,7 @@ export interface AIProvider {
   getModels(settings?: AppSettings): Promise<string[]>;
   loadModel(settings?: AppSettings): Promise<ConnectionResult>;
   analyzePaper(request: AnalysisRequest): Promise<PaperAnalysisResult>;
+  scorePaper(request: ScoreRequest): Promise<PaperScore>;
   generateTags(paperId: string, requestId: string): Promise<string[]>;
   comparePapers(request: CompareRequest): Promise<PaperComparisonResult>;
   cancel(requestId: string): Promise<void>;

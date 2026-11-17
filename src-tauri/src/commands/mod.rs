@@ -35,4 +35,5 @@ pub mod import;
 pub mod library_cache;
 pub mod paper;
 pub mod research;
+pub mod scoring;
 pub mod settings;

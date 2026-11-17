@@ -26,6 +26,19 @@ impl PaperAnalysisInputBuilder {
             500.min(self.max_characters / 10),
             self.max_characters,
         );
+        if let Some(venue) = paper
+            .publication_venue
+            .as_deref()
+            .filter(|value| !value.trim().is_empty())
+        {
+            push_section(
+                &mut output,
+                "PUBLICATION VENUE",
+                venue,
+                240.min(self.max_characters / 20),
+                self.max_characters,
+            );
+        }
         if let Some(abstract_text) = paper.abstract_value().or(sections.abstract_text.as_deref()) {
             push_section(
                 &mut output,
@@ -157,6 +170,7 @@ mod tests {
             analysis: None,
             analysis_provider: None,
             tags: vec![],
+            score: None,
             analysis_status: "not_analyzed".into(),
             analysis_error: None,
             pdf_diagnostics: None,

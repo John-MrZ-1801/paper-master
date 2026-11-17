@@ -8,6 +8,8 @@ import { AnalysisVersions } from "./AnalysisVersions";
 import type { AnalysisVersionsService } from "../../services/AnalysisVersionsService";
 
 import { MetadataEditor,type EditableMetadata } from "./MetadataEditor";
+import { PaperScoreCard } from "./PaperScoreCard";
+import type { ScoringService } from "../../services/ScoringService";
 
 interface Props {
   onSaveMetadata(metadata:EditableMetadata):Promise<void>;
@@ -24,6 +26,11 @@ interface Props {
   authorError?: string;
   onSelectRelated(id: string): void;
   requestId?: string;
+  scoringService?: ScoringService;
+  scoring?: boolean;
+  scoreRequestId?: string;
+  onScore?(): void;
+  onCancelScore?(): void;
 }
 
 function AnalysisContent({ paper }: { paper: Paper }) {
@@ -71,14 +78,14 @@ function AnalysisContent({ paper }: { paper: Paper }) {
   );
 }
 
-export function PaperDetail({ paper, analyzing, onAnalyze, onCancel, onOpen, onDelete, onRelink, authorContext, authorError, onSelectRelated,requestId,versionsService,onChanged,onSaveMetadata }: Props) {
+export function PaperDetail({ paper, analyzing, onAnalyze, onCancel, onOpen, onDelete, onRelink, authorContext, authorError, onSelectRelated,requestId,versionsService,onChanged,onSaveMetadata,scoringService,scoring=false,scoreRequestId,onScore,onCancelScore }: Props) {
   if (!paper) {
     return <section className="detail-empty"><div className="empty-document"><FileIcon/></div><strong>Select a paper</strong><span>Metadata and local AI analysis will appear here.</span></section>;
   }
   return (
     <section className="paper-detail">
       <header className="detail-header">
-        <div className="detail-title-block"><span className="document-type">PDF</span><h1>{paper.title}</h1><p>{formatAuthors(paper.authors)}{paper.year ? ` · ${paper.year}` : ""}</p></div>
+        <div className="detail-title-block"><span className="document-type">PDF</span><h1>{paper.title}</h1>{paper.score&&<div className="detail-score-line"><strong>{paper.score.overall_score}</strong><span>论文评分 / 100</span>{paper.score.edited&&<em>人工修订</em>}</div>}<p>{formatAuthors(paper.authors)}{paper.year ? ` · ${paper.year}` : ""}</p></div>
         <div className="detail-actions">
           <button className="button secondary" onClick={onOpen}><ExternalIcon/>Open PDF</button>
           <button className="button secondary" onClick={onRelink}>重新关联 PDF</button>
@@ -92,6 +99,7 @@ export function PaperDetail({ paper, analyzing, onAnalyze, onCancel, onOpen, onD
         {paper.pdf_diagnostics && <div><span>Extracted</span><strong>{formatNumber(paper.pdf_diagnostics.extracted_character_count)} characters · {paper.pdf_diagnostics.page_count} pages</strong></div>}
       </div>
       <div className="detail-scroll">
+        {scoringService&&onScore&&onCancelScore&&<PaperScoreCard paper={paper} service={scoringService} scoring={scoring} requestId={scoreRequestId} onScore={onScore} onCancel={onCancelScore} onChanged={onChanged}/>}
         <MetadataEditor key={`metadata-${paper.id}`} paper={paper} onSave={onSaveMetadata}/>
         <div className="detail-overview-grid">
           <section className="author-information overview-card"><div className="overview-card-heading"><span>01</span><h2>作者信息</h2></div>

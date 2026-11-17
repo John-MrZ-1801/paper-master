@@ -1,3 +1,10 @@
+# 2026-11-17 independent scoring and responsive workspace
+
+- Scoring is a separate application flow from analysis. `commands/scoring.rs` builds the same bounded source material but calls the provider scoring contract, validates a score-only JSON schema and persists it in migration 11's `paper_scores` table. Optimistic revisions protect manual edits; the original generated baseline is retained for restoration.
+- The authoritative overall score is recalculated as innovation 37%, rigor 32%, reference value 23% and publication venue 8%. Venue rank or indexing is never invented when the source does not identify a venue. Highlights and deficiencies are limited to one or two items, and every current paper keyword receives a separate innovation score that is not part of the overall score.
+- Cache schema 3 includes the current score plus its generated baseline and remains able to read schemas 1 and 2. Cache recovery never replaces a newer database edit. The library exposes keyword-score sorting only when exactly one keyword filter is active; unscored papers remain after scored papers.
+- `ResizableLibraryLayout` owns the draggable list/detail split. The desktop window stays natively resizable, comparison/task surfaces support CSS resize, and shared button/layout rules wrap labels and reposition controls at narrower widths. The task center can remain collapsed at the right edge.
+
 # v1.0.0 presentation and public boundary
 
 PaperDetail keeps authorship evidence and the abstract in a compact overview, followed by the editable analysis stream. Library-wide same-author / potential-group candidates are a separate final section so relationship discovery does not interrupt reading. RelationshipGraphPage renders local metadata as live SVG; selection derives a weighted direct-neighbor set, emphasizes links by normalized strength, de-emphasizes unrelated nodes and exposes a ranked keyboard-accessible inspector. Static export remains a secondary output of the same source-backed graph.

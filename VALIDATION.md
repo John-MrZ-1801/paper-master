@@ -1,10 +1,10 @@
 # 未发布维护验证（2026-11-17）
 
-- 前端：`pnpm test` 9 个测试文件、38 项全部通过；新增回归覆盖时间/名称/第一作者排序、不修改原列表及任务中心右侧收缩/展开。`pnpm build` 通过，Vite 生产构建转换 154 个模块。
-- 后端：`cargo test --locked --manifest-path src-tauri/Cargo.toml` 在正常权限下 93 项通过、0 失败、7 项真实外部服务测试 ignored。受限沙箱首次有 6 项本机模拟 HTTP 测试因回环端口被禁止而失败；正常权限重跑全部通过，不是产品断言回归。
-- Windows 产物：`scripts/Build-Local.ps1 -NoInstaller` 退出码 0，重跑前后端全部检查并生成 release EXE。`application/paper-master.exe` 为 19,495,936 字节，SHA-256 为 `d62d1de355d0d8cf29da85d82414930efed48d89df756fad2339e0138b573ece`；`release.json` 与 `SHA256SUMS.txt` 已同步。未构建安装器，版本号保持 1.0.0。
-- 隐私检查：已扫描 Git 跟踪路径、待提交文本、邮箱、本机绝对路径、常见令牌/私钥前缀和字面凭据赋值。未发现个人路径、真实密钥、论文、数据库、缓存或凭据文件；源码命中仅为测试占位值与示例邮箱。新 EXE 对个人用户/检出路径和私钥前缀无命中；宽泛字节扫描的“邮箱”与 `nthu` 命中分别是随机二进制片段和第三方字形名 `phinthuthai`，不是联系方式或单位端点。
-- 视觉验证限制：本地 Vite 服务成功启动，但 Codex 内置浏览器后端不可用，Windows 浏览器启动又因应用控制授权超时未完成，因此不宣称截图级验收。组件交互回归、TypeScript 检查和生产构建已通过。
+- 前端：`pnpm test` 9 个测试文件、40 项全部通过；覆盖时间 / 名称 / 第一作者排序、单关键词创新分排序、评分 Schema 及既有导航回归。生产构建通过，Vite 转换 157 个模块。
+- 后端：`cargo test --locked --manifest-path src-tauri/Cargo.toml` 在正常权限下 95 项通过、0 失败、7 项真实外部服务测试 ignored。新增回归覆盖加权总分重算、关键词完整性、评分人工修订冲突、原始 AI 评分保留和模式 11 迁移；受限沙箱中的回环端口失败在正常权限重跑后全部通过。
+- 数据与界面：数据库模式 11、缓存格式 3 兼容读取格式 1、2。Windows Edge 本地预览实际完成 AI 评分，确认总分位于作者上方、分项 / 亮点 / 缺陷 / 关键词分显示正常；单关键词筛选后出现对应创新分升降序选项，评分按钮显示“AI 评分”。
+- Windows 产物：`scripts/Build-Local.ps1 -NoInstaller` 退出码 0，重跑前后端全部检查并生成 release EXE。`application/paper-master.exe` 为 19,823,616 字节，SHA-256 为 `307acad9cd72f7553764f564c841a8fecd6f0e5b6ffeb6f49ede523f9b43a180`；`release.json` 与 `SHA256SUMS.txt` 已同步。未构建安装器，版本号保持 1.0.0。
+- 清理与隐私：删除过期问题清单，构建脚本不再在 application 留下重复的版本号 EXE；application 仅保留正式 EXE、README 和两份清单。已扫描待提交源码、跟踪 / 新增路径、邮箱、本机检出路径、常见令牌 / 私钥前缀、凭据赋值及新 EXE；未发现真实密钥、个人路径、论文、数据库、缓存或凭据文件。源码命中仅为测试占位 `test-only-key`、示例邮箱、公开仓库地址、通用演示路径和期刊名称测试字符串。
 
 # v1.0.0 初步上线版验证（2026-11-16）
 
@@ -236,6 +236,6 @@ LM Studio was not running during final packaging; local model inference therefor
 - `services::research::tests::live_downloads_open_pdf -- --ignored --exact` passed: real HTTPS arXiv PDF retrieval and PDF-header validation, 2.83 seconds. Test-owned download removed after verification; corpus PDFs unchanged.
 - Configured read-only real-corpus import test: 12 imported, 0 failed, 2 isolated parser fallbacks, 12 duplicates on reimport, 10 FTS matches and a successful Chinese-path import; 20.14 seconds. Existing third-party parser panics are caught per PDF and do not abort import. All 12 source PDFs also match their SHA-256 values from the original transfer ZIP.
 - Actual desktop Open PDF launched WPS and rendered the selected 11-page corpus document. The application database upgraded to migration 6, integrity check returned `ok`, and all three existing abstracts exclude Index Terms and author/affiliation footnotes.
-- Actual IEEE access through the supplied WebVPN root showed the university institutional-access banner and subscribed search results. The tested PDF stamp page remained blank; the new application's isolated browser profile requires its own login. Institution-authenticated download/import has NOT been verified end to end and remains explicitly experimental; limitations and fallback steps are in `问题清单/2026-10-23-联网检索与下载问题清单.md`.
+- Actual IEEE access through the supplied WebVPN root showed an institutional-access banner and subscribed search results. The tested PDF stamp page remained blank; the application's isolated browser profile requires its own login. Institution-authenticated download/import has NOT been verified end to end and remains explicitly experimental; the current interface and README retain this limitation. The obsolete standalone problem-list file has been removed from the public repository.
 - Final `pnpm tauri build --ci -- --locked` succeeded and produced a release executable plus the NSIS installer. Final executable is copied to `application/paper-master-updated.exe`; old running executable was preserved after the user stopped Computer Use. No further desktop interactions were performed after that interruption.
 - School credential TXT is outside the repository in the current user's LOCALAPPDATA private folder. New Git/transfer exclusions cover credential text and browser-profile folders; no real credentials are embedded in application source or settings. LM Studio stays restricted to loopback; Codex requires explicit saved online consent. Version sources stay at 0.3.1.

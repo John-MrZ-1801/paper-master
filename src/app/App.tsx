@@ -24,6 +24,7 @@ import { progressService,type TaskUpdate } from "../services/ProgressService";
 import { RelationshipGraphPage } from "../pages/RelationshipGraphPage";
 import { LibraryCacheService } from "../services/LibraryCacheService";
 import { KeepAliveView } from "../components/KeepAliveView";
+import { ResizableLibraryLayout } from "../components/ResizableLibraryLayout";
 
 const defaultServices = createApplicationServices();
 const libraryCache = new LibraryCacheService();
@@ -45,6 +46,8 @@ export function App({ services = defaultServices }: { services?: ApplicationServ
   const [authorError, setAuthorError] = useState<string>();
   const [analyzingId, setAnalyzingId] = useState<string>();
   const [activeRequestId, setActiveRequestId] = useState<string>();
+  const [scoringId,setScoringId]=useState<string>();
+  const [scoreRequestId,setScoreRequestId]=useState<string>();
   const [comparisonOpen, setComparisonOpen] = useState(false);
   const [comparisonResult, setComparisonResult] = useState<PaperComparisonResult>();
   const [comparisonPapers, setComparisonPapers] = useState<Paper[]>([]);
@@ -104,7 +107,9 @@ export function App({ services = defaultServices }: { services?: ApplicationServ
   }, [loadPapers]);
 
   const selected = papers.find((paper) => paper.id === selectedId);
-  const sortedPapers = useMemo(() => sortPapers(papers, sort), [papers, sort]);
+  const selectedKeyword=selectedTags.length===1?selectedTags[0]:undefined;
+  const sortedPapers = useMemo(() => sortPapers(papers, sort, selectedKeyword), [papers, sort, selectedKeyword]);
+  useEffect(()=>{if(!selectedKeyword&&sort.startsWith("keyword-score"))setSort("created-desc");},[selectedKeyword,sort]);
   useEffect(() => { setSelectedId((current) => current && sortedPapers.some((paper) => paper.id === current) ? current : sortedPapers[0]?.id); }, [sortedPapers]);
   useEffect(() => {
     let active = true;
@@ -179,6 +184,14 @@ export function App({ services = defaultServices }: { services?: ApplicationServ
     catch (error) { notify("error", "Analysis could not be cancelled", normalizeAppError(error).message); }
   }
 
+  async function scoreSelected(){
+    if(!selected||scoringId)return;const requestId=createOperationId("scoring");setScoringId(selected.id);setScoreRequestId(requestId);
+    try{await services.scoringService.score(selected,requestId);await loadPapers(true);notify("success","AI 评分已保存","论文总分与关键词创新分已独立生成。");}
+    catch(error){notify("error","论文评分未完成",normalizeAppError(error).message);}finally{setScoringId(undefined);setScoreRequestId(undefined);}
+  }
+
+  async function cancelScoring(){if(!scoreRequestId)return;try{await services.scoringService.cancel(scoreRequestId);notify("info","正在取消评分");}catch(error){notify("error","评分无法取消",normalizeAppError(error).message);}}
+
   async function compareSelected() {
     if (compareIds.size < 2 || compareIds.size > 8) return;
     if (comparing) { setComparisonOpen(true); return; }
@@ -238,23 +251,21 @@ export function App({ services = defaultServices }: { services?: ApplicationServ
   function settingsSaved(settings: AppSettings) {
     setOnlineMode(settings.privacy_mode === "codex_online");
     services.analysisService.setProvider(services.providers[settings.ai_provider === "codex" && settings.privacy_mode === "local_only" ? "lmstudio" : settings.ai_provider]);
+    services.scoringService.setProvider(services.providers[settings.ai_provider === "codex" && settings.privacy_mode === "local_only" ? "lmstudio" : settings.ai_provider]);
     services.comparisonService.setProvider(services.providers[settings.ai_provider === "codex" && settings.privacy_mode === "local_only" ? "lmstudio" : settings.ai_provider]);
   }
 
   return (
     <div className="app-shell">
       <Sidebar onResumeComparison={comparisonRequestId && comparisonPapers.length >= 2 ? () => setComparisonOpen(true) : undefined} comparing={comparing} view={view} filter={filter} tags={tags} activeTags={selectedTags} onlineMode={onlineMode} onView={setView} onFilter={setFilter} onTag={tag => setSelectedTags(current => current.includes(tag) ? current.filter(value => value !== tag) : [...current, tag])} onClearTags={() => setSelectedTags([])}/>
-      <KeepAliveView active={view === "library"} name="library"><div className="library-layout">
-        <section className="library-column">
-          <LibraryToolbar onFillMissing={services.tauri ? async () => { try { const result = await services.paperService.queueMissing(papers.map(paper => paper.id)); await loadPapers(true); notify("success", `已加入分析队列 ${result.queued} 篇`, `已有结果/任务跳过 ${result.skipped} 篇，无可读文字 ${result.no_text} 篇。使用 Settings 中保存的服务，可关闭后续跑。`); } catch (error) { notify("error", "补齐未开始", normalizeAppError(error).message); } } : undefined} search={search} sort={sort} compareCount={compareIds.size} loading={loading} onSearch={setSearch} onSort={setSort} onImportPdf={() => void importPapers(false)} onImportFolder={() => void importPapers(true)} onCompare={() => void compareSelected()}/>
+      <KeepAliveView active={view === "library"} name="library"><ResizableLibraryLayout list={<section className="library-column">
+          <LibraryToolbar selectedKeyword={selectedKeyword} onFillScores={async()=>{const requestId=createOperationId("scoring");setScoreRequestId(requestId);try{const result=await services.scoringService.scoreMissing(papers,requestId);await loadPapers(true);notify(result.failed?"info":"success",`已完成 AI 评分 ${result.scored} 篇`,`已有评分跳过 ${result.skipped} 篇，失败 ${result.failed} 篇。`);}catch(error){notify("error","批量评分未完成",normalizeAppError(error).message);}finally{setScoreRequestId(undefined);}}} onFillMissing={services.tauri ? async () => { try { const result = await services.paperService.queueMissing(papers.map(paper => paper.id)); await loadPapers(true); notify("success", `已加入分析队列 ${result.queued} 篇`, `已有结果/任务跳过 ${result.skipped} 篇，无可读文字 ${result.no_text} 篇。使用 Settings 中保存的服务，可关闭后续跑。`); } catch (error) { notify("error", "补齐未开始", normalizeAppError(error).message); } } : undefined} search={search} sort={sort} compareCount={compareIds.size} loading={loading} onSearch={setSearch} onSort={setSort} onImportPdf={() => void importPapers(false)} onImportFolder={() => void importPapers(true)} onCompare={() => void compareSelected()}/>
           {cacheWarning && <div className="library-import-progress" role="alert"><p>{cacheWarning}</p><button className="button secondary" onClick={() => setView("diagnostics")}>查看论文缓存</button></div>}
           {importRequestId && <div className="library-import-progress"><InlineTaskProgress id={importRequestId}/></div>}
           {(filter !== "all" || selectedTags.length > 0) && <div className="active-filter"><span>Showing {selectedTags.length ? `同时包含：${selectedTags.join("、")}` : filter === "recent" ? "recently added" : "AI analyzed"}</span><button onClick={() => { setSelectedTags([]); setFilter("all"); }}>Clear</button></div>}
           <PaperList papers={sortedPapers} selectedId={selectedId} compareIds={compareIds} loading={loading} onSelect={setSelectedId} onToggleCompare={toggleCompare}/>
           <footer className="library-count">{papers.length} paper{papers.length === 1 ? "" : "s"}</footer>
-        </section>
-        <PaperDetail onSaveMetadata={async metadata=>{if(selected){await services.paperService.editMetadata(selected.id,metadata);await loadPapers(true);}}} versionsService={services.analysisVersionsService} onChanged={() => void loadPapers(true)} requestId={analyzingId === selected?.id ? activeRequestId : undefined} paper={selected} authorContext={authorContext} authorError={authorError} onSelectRelated={(id) => { setSearch(""); setSelectedTags([]); setFilter("all"); setSelectedId(id); }} onRelink={() => void relinkSelected()} analyzing={!!selected && (analyzingId === selected.id || ["queued", "analyzing"].includes(selected.analysis_status))} onAnalyze={() => void analyzeSelected()} onCancel={() => void cancelAnalysis()} onOpen={() => void openSelected()} onDelete={() => void deleteSelected()}/>
-      </div></KeepAliveView>
+        </section>} detail={<PaperDetail scoringService={services.scoringService} scoring={scoringId===selected?.id} scoreRequestId={scoreRequestId} onScore={()=>void scoreSelected()} onCancelScore={()=>void cancelScoring()} onSaveMetadata={async metadata=>{if(selected){await services.paperService.editMetadata(selected.id,metadata);await loadPapers(true);}}} versionsService={services.analysisVersionsService} onChanged={() => void loadPapers(true)} requestId={analyzingId === selected?.id ? activeRequestId : undefined} paper={selected} authorContext={authorContext} authorError={authorError} onSelectRelated={(id) => { setSearch(""); setSelectedTags([]); setFilter("all"); setSelectedId(id); }} onRelink={() => void relinkSelected()} analyzing={!!selected && (analyzingId === selected.id || ["queued", "analyzing"].includes(selected.analysis_status))} onAnalyze={() => void analyzeSelected()} onCancel={() => void cancelAnalysis()} onOpen={() => void openSelected()} onDelete={() => void deleteSelected()}/>}/></KeepAliveView>
       <KeepAliveView active={view === "settings"} name="settings"><SettingsPage storage={services.settingsStorage} providers={services.providers} onSaved={settingsSaved} onNotify={notify}/></KeepAliveView>
       <KeepAliveView active={view === "diagnostics"} name="diagnostics"><DiagnosticsPage active={view === "diagnostics"} onNotify={notify}/></KeepAliveView>
       <KeepAliveView active={view === "research"} name="research"><ResearchPage active={view === "research"} service={services.researchService} paperService={services.paperService} initialReferenceId={selectedId} desktop={services.tauri} onImported={() => void loadPapers(true)} onSettings={() => setView("settings")}/></KeepAliveView>

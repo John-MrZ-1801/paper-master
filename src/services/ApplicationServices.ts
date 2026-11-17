@@ -14,6 +14,7 @@ import { ResearchService } from "./ResearchService";
 import { RelationshipGraphService } from "./RelationshipGraphService";
 
 import { AnalysisVersionsService } from "./AnalysisVersionsService";
+import { ScoringService } from "./ScoringService";
 
 export function createApplicationServices() {
   const tauri = isTauriRuntime();
@@ -33,6 +34,7 @@ export function createApplicationServices() {
     paperService,
     graphService: new RelationshipGraphService(paperService),
     analysisService,
+    scoringService: new ScoringService(tauri ? providers.lmstudio : providers.mock, repository),
     analysisVersionsService: new AnalysisVersionsService(repository),
     comparisonService: new ComparisonService(tauri ? providers.lmstudio : providers.mock, analysisService, repository),
   };

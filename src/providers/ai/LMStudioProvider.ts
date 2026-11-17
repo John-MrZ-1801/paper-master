@@ -1,5 +1,5 @@
 import { invokeCommand } from "../../adapters/tauri/invokeCommand";
-import { paperAnalysisSchema, paperComparisonSchema, type AnalysisRequest, type CompareRequest, type ConnectionResult } from "../../domain/ai/types";
+import { paperAnalysisSchema, paperComparisonSchema, paperScoreSchema, type AnalysisRequest, type CompareRequest, type ConnectionResult, type ScoreRequest } from "../../domain/ai/types";
 import type { AIProvider } from "./AIProvider";
 
 export class LMStudioProvider implements AIProvider {
@@ -20,6 +20,11 @@ export class LMStudioProvider implements AIProvider {
   async analyzePaper(request: AnalysisRequest) {
     const result = await invokeCommand<unknown>("analyze_paper", { request });
     return paperAnalysisSchema.parse(result);
+  }
+
+  async scorePaper(request: ScoreRequest) {
+    const result = await invokeCommand<unknown>("score_paper", { request });
+    return paperScoreSchema.parse(result);
   }
 
   generateTags(paperId: string, requestId: string) {

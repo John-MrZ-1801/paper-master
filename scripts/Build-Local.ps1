@@ -38,7 +38,6 @@ try {
         [IO.Directory]::CreateDirectory($backupDirectory) | Out-Null
         Copy-Item -LiteralPath $entryPath -Destination (Join-Path $backupDirectory "paper-master-before-$releaseVersion-$(Get-Date -Format yyyyMMdd-HHmmss).exe")
     }
-    Copy-Item -LiteralPath (Join-Path $projectRoot 'src-tauri\target\release\paper-master.exe') -Destination (Join-Path $projectRoot "application\paper-master-v$releaseVersion.exe")
     try {
         Copy-Item -LiteralPath (Join-Path $projectRoot 'src-tauri\target\release\paper-master.exe') -Destination $entryPath -ErrorAction Stop
     }

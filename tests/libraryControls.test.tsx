@@ -38,6 +38,12 @@ describe("library controls",()=>{
     const ids=(sort:PaperSort)=>sortPapers(source,sort).map(item=>item.id);
     expect(ids("created-desc")).toEqual(["a","b","c"]);expect(ids("title-asc")).toEqual(["a","b","c"]);expect(ids("author-asc")).toEqual(["a","b","c"]);expect(ids("author-desc")).toEqual(["b","a","c"]);expect(source.map(item=>item.id)).toEqual(["b","a","c"]);
   });
+  it("sorts a filtered keyword by its independent innovation score and keeps missing scores last",()=>{
+    const paper=(id:string,value?:number)=>({id,title:id,authors:[],created_at:"2026-01-01T00:00:00Z",file_name:`${id}.pdf`,file_path:id,tags:["ISAC"],analysis_status:"not_analyzed",updated_at:"2026-01-01T00:00:00Z",score:value===undefined?undefined:{schema_version:"1",overall_score:60,innovation_score:60,rigor_score:60,reference_value_score:60,venue_score:60,highlights:["亮点"],deficiencies:["缺陷"],keyword_scores:[{keyword:"ISAC",innovation_score:value}],provider:"mock",model:"mock",generated_at:"now",updated_at:"now",revision:0,edited:false}}) as Paper;
+    const source=[paper("medium",67),paper("missing"),paper("high",82),paper("low",51)];
+    expect(sortPapers(source,"keyword-score-desc","ISAC").map(item=>item.id)).toEqual(["high","medium","low","missing"]);
+    expect(sortPapers(source,"keyword-score-asc","ISAC").map(item=>item.id)).toEqual(["low","medium","high","missing"]);
+  });
   it("docks the collapsed task center at the right edge and expands on demand",async()=>{
     progressService.begin("library-sort","analysis","排序任务","处理中");
     const container=document.createElement("div");const root=createRoot(container);

@@ -22,6 +22,32 @@ export interface PaperAnalysisResult {
   ai_summary?: string;
 }
 
+export interface KeywordInnovationScore {
+  keyword: string;
+  innovation_score: number;
+}
+
+export interface PaperScoreResult {
+  schema_version: "1";
+  overall_score: number;
+  innovation_score: number;
+  rigor_score: number;
+  reference_value_score: number;
+  venue_score: number;
+  highlights: string[];
+  deficiencies: string[];
+  keyword_scores: KeywordInnovationScore[];
+}
+
+export interface PaperScore extends PaperScoreResult {
+  provider: string;
+  model: string;
+  generated_at: string;
+  updated_at: string;
+  revision: number;
+  edited: boolean;
+}
+
 export interface Paper {
   id: string;
   file_path: string;
@@ -34,6 +60,7 @@ export interface Paper {
   analysis?: PaperAnalysisResult;
   analysis_provider?: string;
   tags: string[];
+  score?: PaperScore;
   analysis_status: AnalysisStatus;
   analysis_error?: string;
   pdf_diagnostics?: PdfDiagnostics;

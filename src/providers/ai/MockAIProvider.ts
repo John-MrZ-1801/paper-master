@@ -1,5 +1,5 @@
-import type { PaperAnalysisResult } from "../../domain/paper/Paper";
-import type { AnalysisRequest, CompareRequest, ConnectionResult, PaperComparisonResult } from "../../domain/ai/types";
+import type { PaperAnalysisResult, PaperScore } from "../../domain/paper/Paper";
+import type { AnalysisRequest, CompareRequest, ConnectionResult, PaperComparisonResult, ScoreRequest } from "../../domain/ai/types";
 import type { AIProvider } from "./AIProvider";
 import { AppError } from "../../types/errors";
 
@@ -51,6 +51,15 @@ export class MockAIProvider implements AIProvider {
 
   async generateTags() {
     return [...MOCK_ANALYSIS.tags];
+  }
+
+  async scorePaper(request: ScoreRequest): Promise<PaperScore> {
+    await delay(350);
+    if (this.cancelled.delete(request.request_id)) throw new AppError({code:"AI_CANCELLED",message:"论文评分已取消。"});
+    const now = new Date().toISOString();
+    return { schema_version:"1",overall_score:65,innovation_score:64,rigor_score:68,reference_value_score:63,venue_score:60,
+      highlights:["问题定义清晰，方法流程便于复现。"],deficiencies:["验证范围较窄，尚不足以支持更强的普适性结论。"],keyword_scores:[],
+      provider:"mock",model:"paper-master-mock-v1",generated_at:now,updated_at:now,revision:0,edited:false };
   }
 
   async comparePapers(request: CompareRequest): Promise<PaperComparisonResult> {

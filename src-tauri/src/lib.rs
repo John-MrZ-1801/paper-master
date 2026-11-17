@@ -90,6 +90,10 @@ pub fn run() {
             commands::ai::edit_comparison_result,
             commands::ai::cancel_ai_request,
             commands::ai::cancel_paper_analysis,
+            commands::scoring::score_paper,
+            commands::scoring::score_papers,
+            commands::scoring::edit_paper_score,
+            commands::scoring::restore_paper_score,
         ])
         .run(tauri::generate_context!())
         .expect("failed to run paper-master");

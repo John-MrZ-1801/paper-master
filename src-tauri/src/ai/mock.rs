@@ -5,7 +5,7 @@ use crate::{
     ai::{AIProvider, ProviderResponse},
     domain::{
         ai::{ConnectionResult, PaperComparisonResult},
-        paper::PaperAnalysisResult,
+        paper::{KeywordInnovationScore, PaperAnalysisResult, PaperScoreResult},
         settings::AppSettings,
     },
     error::{AppError, AppResult, ErrorCode},
@@ -51,6 +51,28 @@ impl AIProvider for MockAIProvider {
         _cancellation: CancellationToken,
     ) -> AppResult<Vec<String>> {
         Ok(mock_analysis().tags)
+    }
+    async fn score_paper(
+        &self,
+        _input: &str,
+        keywords: &[String],
+        _settings: &AppSettings,
+        cancellation: CancellationToken,
+    ) -> AppResult<ProviderResponse<PaperScoreResult>> {
+        tokio::select! {
+            _ = cancellation.cancelled() => Err(AppError::new(ErrorCode::AiCancelled, "AI scoring was cancelled.")),
+            _ = tokio::time::sleep(std::time::Duration::from_millis(250)) => Ok(ProviderResponse {
+                value: PaperScoreResult {
+                    schema_version: "1".into(), overall_score: 65, innovation_score: 64,
+                    rigor_score: 68, reference_value_score: 63, venue_score: 60,
+                    highlights: vec!["问题定义清晰，方法流程便于复现。".into()],
+                    deficiencies: vec!["验证范围较窄，尚不足以支持更强的普适性结论。".into()],
+                    keyword_scores: keywords.iter().enumerate().map(|(index, keyword)| KeywordInnovationScore { keyword: keyword.clone(), innovation_score: 61 + (index % 5) as u8 }).collect(),
+                },
+                http_status: None, retry_count: 0, method: None, endpoint: None,
+                model: Some("paper-master-mock-v1".into()), response_diagnostics: None,
+            }),
+        }
     }
     async fn compare_papers(
         &self,

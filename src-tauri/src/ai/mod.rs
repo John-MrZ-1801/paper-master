@@ -18,7 +18,7 @@ use crate::{
     domain::settings::AppSettings,
     domain::{
         ai::{AIResponseDiagnostics, ConnectionResult, PaperComparisonResult},
-        paper::PaperAnalysisResult,
+        paper::{PaperAnalysisResult, PaperScoreResult},
     },
     error::{AppError, AppResult, ErrorCode},
 };
@@ -71,6 +71,18 @@ pub trait AIProvider: Send + Sync {
         settings: &AppSettings,
         cancellation: CancellationToken,
     ) -> AppResult<ProviderResponse<PaperAnalysisResult>>;
+    async fn score_paper(
+        &self,
+        _input: &str,
+        _keywords: &[String],
+        _settings: &AppSettings,
+        _cancellation: CancellationToken,
+    ) -> AppResult<ProviderResponse<PaperScoreResult>> {
+        Err(AppError::new(
+            ErrorCode::ModelStructuredOutputIncompatible,
+            "此服务不支持独立论文评分。",
+        ))
+    }
     async fn generate_tags(
         &self,
         input: &str,

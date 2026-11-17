@@ -211,6 +211,31 @@ END;
 "#,
     ),
     (10, "SELECT 1;"),
+    (
+        11,
+        r#"
+CREATE TABLE IF NOT EXISTS paper_scores (
+ paper_id TEXT PRIMARY KEY NOT NULL REFERENCES papers(id) ON DELETE CASCADE,
+ provider TEXT NOT NULL,
+ model TEXT NOT NULL,
+ generated_at TEXT NOT NULL,
+ updated_at TEXT NOT NULL,
+ revision INTEGER NOT NULL DEFAULT 0,
+ edited INTEGER NOT NULL DEFAULT 0 CHECK (edited IN (0,1)),
+ result_json TEXT NOT NULL,
+ original_json TEXT
+);
+CREATE TRIGGER IF NOT EXISTS cache_score_insert AFTER INSERT ON paper_scores BEGIN
+ INSERT INTO library_cache_pending VALUES(new.paper_id) ON CONFLICT(paper_id) DO NOTHING;
+END;
+CREATE TRIGGER IF NOT EXISTS cache_score_update AFTER UPDATE ON paper_scores BEGIN
+ INSERT INTO library_cache_pending VALUES(new.paper_id) ON CONFLICT(paper_id) DO NOTHING;
+END;
+CREATE TRIGGER IF NOT EXISTS cache_score_delete AFTER DELETE ON paper_scores BEGIN
+ INSERT INTO library_cache_pending VALUES(old.paper_id) ON CONFLICT(paper_id) DO NOTHING;
+END;
+"#,
+    ),
 ];
 
 pub fn run_migrations(connection: &mut Connection) -> AppResult<i64> {
@@ -422,11 +447,11 @@ mod tests {
         let mut connection = Connection::open_in_memory().expect("in-memory database");
         assert_eq!(
             run_migrations(&mut connection).expect("first migration"),
-            10
+            11
         );
         assert_eq!(
             run_migrations(&mut connection).expect("second migration"),
-            10
+            11
         );
         let paper_table: String = connection
             .query_row(
@@ -459,7 +484,7 @@ mod tests {
         connection
             .pragma_update(None, "user_version", 2)
             .expect("version");
-        assert_eq!(run_migrations(&mut connection).expect("migration"), 10);
+        assert_eq!(run_migrations(&mut connection).expect("migration"), 11);
         let path: String = connection
             .query_row("SELECT file_path FROM papers WHERE id='p1'", [], |row| {
                 row.get(0)
@@ -482,7 +507,7 @@ mod tests {
             .pragma_update(None, "user_version", 3)
             .expect("version");
 
-        assert_eq!(run_migrations(&mut connection).expect("migration"), 10);
+        assert_eq!(run_migrations(&mut connection).expect("migration"), 11);
         let modules: (String, Option<String>, String) = connection
             .query_row(
                 "SELECT analysis_schema_version,research_scenario,key_innovations_json FROM papers WHERE id='p1'",
@@ -508,7 +533,7 @@ mod tests {
             .pragma_update(None, "user_version", 4)
             .expect("version");
 
-        assert_eq!(run_migrations(&mut connection).expect("migration"), 10);
+        assert_eq!(run_migrations(&mut connection).expect("migration"), 11);
         let venue: Option<String> = connection
             .query_row(
                 "SELECT publication_venue FROM papers WHERE id='p1'",
@@ -534,7 +559,7 @@ mod tests {
             .pragma_update(None, "user_version", 4)
             .expect("version");
 
-        assert_eq!(run_migrations(&mut connection).expect("migration"), 10);
+        assert_eq!(run_migrations(&mut connection).expect("migration"), 11);
         let venue: Option<String> = connection
             .query_row(
                 "SELECT publication_venue FROM papers WHERE id='p1'",
@@ -560,7 +585,7 @@ mod tests {
             .pragma_update(None, "user_version", 4)
             .expect("version");
 
-        assert_eq!(run_migrations(&mut connection).expect("migration"), 10);
+        assert_eq!(run_migrations(&mut connection).expect("migration"), 11);
         let title: String = connection
             .query_row("SELECT title FROM papers WHERE id='p1'", [], |row| {
                 row.get(0)

@@ -1,3 +1,7 @@
+# Current maintenance: independent scoring and responsive workspace (2026-11-17)
+
+Accepted scope is implemented without a version-number change: independent paper and keyword scoring with editable generated baselines; an 8% venue component in the overall score; strict internal score anchors; keyword-score sorting under a single-keyword filter; draggable library panes; resizable task/comparison surfaces; responsive buttons; explicit name/time/author sorting; and a right-collapsible task center. Database migration 11 and cache schema 3 preserve existing data and read older cache formats. Final release validation and GitHub synchronization are required before this section is considered published.
+
 # Current release: v1.0.0 initial launch (2026-11-15)
 
 Initial public milestone: reading-first paper details, relevance-focused interactive relationship graphs, grouped Settings and Diagnostics, and a sanitized public distribution without personal contact details, machine-specific paths or institution-specific endpoints. Database schema and existing local data remain unchanged. The next version requires an explicit user decision.
@@ -49,7 +53,7 @@ The project follows a stable-core / extensible-adapter design. A phase is comple
 
 ## Definition of done
 
-2026-10-23 用户追加范围：PDF 打开修复；可选 Codex IEEE 检索与论文阅读总结；公开 PDF 下载、学校 WebVPN 试验下载；摘要清理与旧库迁移；作者身份/通信证据/本地关联论文；主程序之外的私有凭据 TXT 与迁移排除。学校订阅自动下载未完成端到端验证的部分须保留在独立“问题清单”文件夹，不能据仅打开入口宣称成功。
+2026-10-23 用户追加范围：PDF 打开修复；可选 Codex IEEE 检索与论文阅读总结；公开 PDF 下载、学校 WebVPN 试验下载；摘要清理与旧库迁移；作者身份/通信证据/本地关联论文；主程序之外的私有凭据 TXT 与迁移排除。学校订阅自动下载未完成端到端验证，不能据仅打开入口宣称成功；旧问题清单已删除，现行限制由 README、VALIDATION 和界面提示维护。
 
 - Frontend TypeScript build passes.
 - Rust checks and tests pass.

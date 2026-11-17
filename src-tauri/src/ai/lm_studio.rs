@@ -7,19 +7,20 @@ use tokio_util::sync::CancellationToken;
 use crate::{
     ai::{
         parser::{
-            parse_analysis_response, parse_comparison_response, validate_analysis_tags,
-            validate_comparison_evidence,
+            parse_analysis_response, parse_comparison_response, parse_score_response,
+            validate_analysis_tags, validate_comparison_evidence,
         },
         prompt::{
-            build_analysis_user_prompt, build_comparison_user_prompt, ANALYSIS_SYSTEM_PROMPT,
-            COMPARISON_SYSTEM_PROMPT, REPAIR_ANALYSIS_PROMPT, REPAIR_COMPARISON_PROMPT,
+            build_analysis_user_prompt, build_comparison_user_prompt, build_score_user_prompt,
+            ANALYSIS_SYSTEM_PROMPT, COMPARISON_SYSTEM_PROMPT, REPAIR_ANALYSIS_PROMPT,
+            REPAIR_COMPARISON_PROMPT, REPAIR_SCORE_PROMPT, SCORE_SYSTEM_PROMPT,
         },
         AIProvider, ProviderResponse,
     },
     config::AI_STRUCTURED_RETRY_COUNT,
     domain::{
         ai::{AIResponseDiagnostics, ConnectionResult, PaperComparisonResult},
-        paper::PaperAnalysisResult,
+        paper::{PaperAnalysisResult, PaperScoreResult},
         settings::AppSettings,
     },
     error::{AppError, AppResult, ErrorCode},
@@ -174,6 +175,7 @@ struct ChatCompletion {
 #[derive(Clone, Copy)]
 enum StructuredOutputSchema<'a> {
     PaperAnalysis,
+    PaperScore,
     PaperComparison(&'a str),
     EvidenceNote,
     SemanticAudit,
@@ -183,6 +185,7 @@ impl StructuredOutputSchema<'_> {
     fn name(self) -> &'static str {
         match self {
             Self::PaperAnalysis => "paper_analysis_result",
+            Self::PaperScore => "paper_score_result",
             Self::PaperComparison(_) => "paper_comparison_result",
             Self::EvidenceNote => "paper_evidence_note",
             Self::SemanticAudit => "paper_semantic_audit",
@@ -192,6 +195,7 @@ impl StructuredOutputSchema<'_> {
     fn schema(self) -> serde_json::Value {
         match self {
             Self::PaperAnalysis => PaperAnalysisResult::response_json_schema(),
+            Self::PaperScore => PaperScoreResult::response_json_schema(),
             Self::PaperComparison(input) => comparison_response_schema(input),
             Self::EvidenceNote => super::staged::note_schema(),
             Self::SemanticAudit => super::staged::audit_schema(),
@@ -455,6 +459,62 @@ impl AIProvider for LMStudioProvider {
             .await?
             .value
             .tags)
+    }
+
+    async fn score_paper(
+        &self,
+        input: &str,
+        keywords: &[String],
+        settings: &AppSettings,
+        cancellation: CancellationToken,
+    ) -> AppResult<ProviderResponse<PaperScoreResult>> {
+        let model = self.resolve_model(settings).await?;
+        let prompt = build_score_user_prompt(input, keywords);
+        let mut completion = self
+            .send_chat(
+                SCORE_SYSTEM_PROMPT,
+                &prompt,
+                &model,
+                settings,
+                cancellation.clone(),
+                StructuredOutputSchema::PaperScore,
+            )
+            .await?;
+        let mut content = completion.content.clone();
+        for retry in 0..=AI_STRUCTURED_RETRY_COUNT {
+            if let Ok(value) = parse_score_response(&content, keywords) {
+                return Ok(ProviderResponse {
+                    value,
+                    http_status: Some(completion.http_status),
+                    retry_count: retry,
+                    method: Some("POST".into()),
+                    endpoint: Some(completion.endpoint),
+                    model: Some(model.clone()),
+                    response_diagnostics: Some(completion.diagnostics),
+                });
+            }
+            if retry == AI_STRUCTURED_RETRY_COUNT {
+                break;
+            }
+            let repair = format!(
+                "{REPAIR_SCORE_PROMPT}\n\n{}\n\n待修复响应：\n{content}",
+                build_score_user_prompt(input, keywords)
+            );
+            completion = self
+                .send_chat(
+                    SCORE_SYSTEM_PROMPT,
+                    &repair,
+                    &model,
+                    settings,
+                    cancellation.clone(),
+                    StructuredOutputSchema::PaperScore,
+                )
+                .await?;
+            content = completion.content.clone();
+        }
+        Err(parse_score_response(&content, keywords)
+            .unwrap_err()
+            .response_diagnostics(completion.diagnostics))
     }
 
     async fn compare_papers(

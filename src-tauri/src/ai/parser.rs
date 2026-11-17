@@ -1,7 +1,10 @@
 use regex::Regex;
 
 use crate::{
-    domain::{ai::PaperComparisonResult, paper::PaperAnalysisResult},
+    domain::{
+        ai::PaperComparisonResult,
+        paper::{PaperAnalysisResult, PaperScoreResult},
+    },
     error::{AppError, AppResult, ErrorCode},
 };
 
@@ -76,6 +79,78 @@ pub fn parse_analysis_response(raw: &str) -> AppResult<PaperAnalysisResult> {
         );
     }
     value.schema_version = "2".to_string();
+    Ok(value)
+}
+
+pub fn parse_score_response(raw: &str, keywords: &[String]) -> AppResult<PaperScoreResult> {
+    let json = sanitize_json(raw)?;
+    let mut value: PaperScoreResult = serde_json::from_str(&json).map_err(|error| {
+        invalid_schema(format!("Score schema validation failed: {error}")).stage("SCHEMA_VALIDATED")
+    })?;
+    let scores = [
+        value.overall_score,
+        value.innovation_score,
+        value.rigor_score,
+        value.reference_value_score,
+        value.venue_score,
+    ]
+    .into_iter()
+    .chain(
+        value
+            .keyword_scores
+            .iter()
+            .map(|item| item.innovation_score),
+    );
+    if value.schema_version != "1"
+        || scores.into_iter().any(|score| score > 100)
+        || !(1..=2).contains(&value.highlights.len())
+        || !(1..=2).contains(&value.deficiencies.len())
+        || !value.highlights.iter().all(|item| contains_cjk(item))
+        || !value.deficiencies.iter().all(|item| contains_cjk(item))
+    {
+        return Err(
+            invalid_schema("Score JSON contains invalid scores or review notes.")
+                .stage("SCHEMA_VALIDATED"),
+        );
+    }
+    let normalize = |text: &str| text.trim().to_lowercase();
+    let expected = keywords
+        .iter()
+        .map(|keyword| normalize(keyword))
+        .collect::<Vec<_>>();
+    let received = value
+        .keyword_scores
+        .iter()
+        .map(|item| normalize(&item.keyword))
+        .collect::<Vec<_>>();
+    if received.len() != expected.len()
+        || received
+            .iter()
+            .collect::<std::collections::HashSet<_>>()
+            .len()
+            != received.len()
+        || expected.iter().any(|keyword| !received.contains(keyword))
+    {
+        return Err(
+            invalid_schema("Keyword scores must cover the paper keywords exactly.")
+                .stage("SCHEMA_VALIDATED"),
+        );
+    }
+    for item in &mut value.keyword_scores {
+        if let Some(keyword) = keywords
+            .iter()
+            .find(|keyword| normalize(keyword) == normalize(&item.keyword))
+        {
+            item.keyword = keyword.clone();
+        }
+    }
+    value.keyword_scores.sort_by_key(|item| {
+        keywords
+            .iter()
+            .position(|keyword| normalize(keyword) == normalize(&item.keyword))
+            .unwrap_or(usize::MAX)
+    });
+    value.overall_score = value.calculated_overall();
     Ok(value)
 }
 
@@ -411,6 +486,16 @@ mod tests {
                 .code_string(),
             "AI_INVALID_JSON"
         );
+    }
+
+    #[test]
+    fn strict_score_recalculates_weighted_total_and_requires_every_keyword() {
+        let keywords = vec!["集成感知与通信（ISAC）".into(), "无人机（UAV）".into()];
+        let raw = r#"{"schema_version":"1","overall_score":99,"innovation_score":70,"rigor_score":60,"reference_value_score":50,"venue_score":80,"highlights":["方法定义较清晰。"],"deficiencies":["实验覆盖范围有限。"],"keyword_scores":[{"keyword":"无人机（UAV）","innovation_score":55},{"keyword":"集成感知与通信（ISAC）","innovation_score":62}]}"#;
+        let result = parse_score_response(raw, &keywords).unwrap();
+        assert_eq!(result.overall_score, 63);
+        assert_eq!(result.keyword_scores[0].keyword, keywords[0]);
+        assert!(parse_score_response(raw, &keywords[..1]).is_err());
     }
 
     #[test]

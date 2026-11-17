@@ -10,6 +10,12 @@ pub struct AnalysisRequest {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct ScoreRequest {
+    pub paper_id: String,
+    pub request_id: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct CompareRequest {
     pub paper_ids: Vec<String>,
     pub request_id: String,

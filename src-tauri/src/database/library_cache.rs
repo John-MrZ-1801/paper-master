@@ -4,7 +4,7 @@ use super::{
     paper_repository::{PaperRepository, SqlitePaperRepository},
 };
 use crate::{
-    domain::paper::{Paper, PaperAnalysisResult},
+    domain::paper::{Paper, PaperAnalysisResult, PaperScoreResult},
     error::{AppError, AppResult, ErrorCode},
 };
 use rusqlite::{params, Connection, OptionalExtension};
@@ -15,7 +15,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub const SCHEMA_VERSION: u32 = 2;
+pub const SCHEMA_VERSION: u32 = 3;
 
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct CacheStatus {
@@ -46,6 +46,8 @@ pub(super) struct Entry {
     versions: Vec<CachedVersion>,
     #[serde(default)]
     metadata_edited: bool,
+    #[serde(default)]
+    score_original: Option<PaperScoreResult>,
 }
 
 fn failure() -> AppError {
@@ -210,6 +212,18 @@ pub fn flush(connection: &Connection, directory: &Path) -> AppResult<()> {
                 )
                 .optional()
                 .map_err(|_| failure())?;
+            let score_original = connection
+                .query_row(
+                    "SELECT original_json FROM paper_scores WHERE paper_id=?1",
+                    [&id],
+                    |row| row.get::<_, Option<String>>(0),
+                )
+                .optional()
+                .map_err(|_| failure())?
+                .flatten()
+                .map(|json| serde_json::from_str(&json))
+                .transpose()
+                .map_err(|_| failure())?;
             let entry = Entry {
                 cache_schema_version: SCHEMA_VERSION,
                 paper_id: id.clone(),
@@ -221,6 +235,7 @@ pub fn flush(connection: &Connection, directory: &Path) -> AppResult<()> {
                 paper,
                 versions,
                 metadata_edited: edited.as_deref() == Some("true"),
+                score_original,
             };
             write(directory, &entry)?;
             connection
@@ -318,12 +333,28 @@ fn restore_entry(connection: &Connection, entry: &Entry) -> AppResult<usize> {
     };
     let existing = repo.find_by_id(&entry.paper_id)?;
     let missing_analysis = existing.as_ref().is_some_and(|p| p.analysis.is_none());
+    let missing_score = existing.as_ref().is_some_and(|p| p.score.is_none());
     let is_new = existing.is_none();
     if is_new {
         // Path uniqueness prevents attaching another paper's analysis to an existing record.
         repo.create(paper, &entry.extracted_text)?;
         if entry.metadata_edited {
             connection.execute("INSERT OR IGNORE INTO settings(key,value_json,updated_at) VALUES(?1,'true',?2)", params![format!("metadata-edited:{}", paper.id), paper.updated_at]).map_err(|_| failure())?;
+        }
+    }
+    if (is_new || missing_score) && paper.score.is_some() {
+        crate::database::paper_scores::restore_cached(
+            connection,
+            &paper.id,
+            paper.score.as_ref().expect("checked score"),
+        )?;
+        if let Some(original) = &entry.score_original {
+            connection
+                .execute(
+                    "UPDATE paper_scores SET original_json=?1 WHERE paper_id=?2 AND original_json IS NULL",
+                    params![serde_json::to_string(original).map_err(|_| failure())?, paper.id],
+                )
+                .map_err(|_| failure())?;
         }
     }
     let mut count = usize::from(is_new);

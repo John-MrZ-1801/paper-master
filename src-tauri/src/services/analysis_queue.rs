@@ -290,6 +290,7 @@ mod tests {
             analysis: None,
             analysis_provider: None,
             tags: vec![],
+            score: None,
             analysis_status: status.into(),
             analysis_error: None,
             pdf_diagnostics: None,

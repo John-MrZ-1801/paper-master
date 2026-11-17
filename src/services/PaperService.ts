@@ -33,7 +33,7 @@ export class PaperService {
   }
 }
 
-export function createOperationId(prefix: "analysis" | "compare" | "import") {
+export function createOperationId(prefix: "analysis" | "compare" | "import" | "scoring") {
   const stamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
   return `${prefix}-${stamp}-${crypto.randomUUID().slice(0, 8)}`;
 }

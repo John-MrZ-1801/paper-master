@@ -173,6 +173,7 @@ impl<'state> PaperImportService<'state> {
                 analysis: None,
                 analysis_provider: None,
                 tags: Vec::new(),
+                score: None,
                 analysis_status: if extracted_text.trim().is_empty() {
                     "failed"
                 } else if auto_analyze {

@@ -3,7 +3,7 @@ use super::{lm_studio::LMStudioProvider, AIProvider, ProviderResponse};
 use crate::{
     domain::{
         ai::{ConnectionResult, PaperComparisonResult},
-        paper::PaperAnalysisResult,
+        paper::{PaperAnalysisResult, PaperScoreResult},
         settings::AppSettings,
     },
     error::{AppError, AppResult, ErrorCode},
@@ -86,6 +86,15 @@ impl AIProvider for ExternalProvider {
         c: CancellationToken,
     ) -> AppResult<Vec<String>> {
         LMStudioProvider.generate_tags(input, s, c).await
+    }
+    async fn score_paper(
+        &self,
+        input: &str,
+        keywords: &[String],
+        s: &AppSettings,
+        c: CancellationToken,
+    ) -> AppResult<ProviderResponse<PaperScoreResult>> {
+        LMStudioProvider.score_paper(input, keywords, s, c).await
     }
     async fn compare_papers(
         &self,

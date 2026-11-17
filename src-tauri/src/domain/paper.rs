@@ -16,6 +16,55 @@ pub struct PaperAnalysisResult {
     pub ai_summary: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct KeywordInnovationScore {
+    pub keyword: String,
+    pub innovation_score: u8,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct PaperScoreResult {
+    pub schema_version: String,
+    pub overall_score: u8,
+    pub innovation_score: u8,
+    pub rigor_score: u8,
+    pub reference_value_score: u8,
+    pub venue_score: u8,
+    pub highlights: Vec<String>,
+    pub deficiencies: Vec<String>,
+    pub keyword_scores: Vec<KeywordInnovationScore>,
+}
+
+impl PaperScoreResult {
+    pub fn response_json_schema() -> serde_json::Value {
+        serde_json::to_value(schema_for!(PaperScoreResult))
+            .expect("PaperScoreResult schema must serialize")
+    }
+
+    pub fn calculated_overall(&self) -> u8 {
+        ((u16::from(self.innovation_score) * 37
+            + u16::from(self.rigor_score) * 32
+            + u16::from(self.reference_value_score) * 23
+            + u16::from(self.venue_score) * 8
+            + 50)
+            / 100) as u8
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct PaperScore {
+    #[serde(flatten)]
+    pub result: PaperScoreResult,
+    pub provider: String,
+    pub model: String,
+    pub generated_at: String,
+    pub updated_at: String,
+    pub revision: i64,
+    pub edited: bool,
+}
+
 impl PaperAnalysisResult {
     pub fn response_json_schema() -> serde_json::Value {
         serde_json::to_value(schema_for!(PaperAnalysisResult))
@@ -65,6 +114,8 @@ pub struct Paper {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub analysis_provider: Option<String>,
     pub tags: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub score: Option<PaperScore>,
     pub analysis_status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub analysis_error: Option<String>,
