@@ -19,6 +19,7 @@ fn validate(result: &PaperScoreResult) -> AppResult<()> {
         result.overall_score,
         result.innovation_score,
         result.rigor_score,
+        result.scenario_score.unwrap_or_default(),
         result.reference_value_score,
         result.venue_score,
     ]
@@ -35,7 +36,9 @@ fn validate(result: &PaperScoreResult) -> AppResult<()> {
         .iter()
         .map(|item| item.keyword.trim().to_lowercase())
         .collect::<std::collections::HashSet<_>>();
-    if result.schema_version != "1"
+    let compatible_schema = matches!(result.schema_version.as_str(), "1" | "2")
+        && (result.schema_version == "1" || result.scenario_score.is_some());
+    if !compatible_schema
         || !valid_scores
         || !(1..=2).contains(&result.highlights.len())
         || !(1..=2).contains(&result.deficiencies.len())
@@ -137,11 +140,20 @@ pub fn edit(
     revision: i64,
     result: &PaperScoreResult,
 ) -> AppResult<PaperScore> {
-    validate(result)?;
+    let mut result = result.clone();
+    result.schema_version = "2".into();
+    if result.scenario_score.is_none() {
+        return Err(AppError::new(
+            ErrorCode::AiSchemaValidationFailed,
+            "请先填写场景合理性评分。",
+        ));
+    }
+    result.overall_score = result.calculated_overall();
+    validate(&result)?;
     let changed = connection
         .execute(
             "UPDATE paper_scores SET original_json=COALESCE(original_json,result_json),result_json=?1,updated_at=?2,revision=revision+1,edited=1 WHERE paper_id=?3 AND revision=?4",
-            params![serde_json::to_string(result).map_err(|_| write_failure())?,Utc::now().to_rfc3339(),paper_id,revision],
+            params![serde_json::to_string(&result).map_err(|_| write_failure())?,Utc::now().to_rfc3339(),paper_id,revision],
         )
         .map_err(|_| write_failure())?;
     if changed == 0 {
@@ -176,10 +188,11 @@ mod tests {
 
     fn result(score: u8) -> PaperScoreResult {
         PaperScoreResult {
-            schema_version: "1".into(),
+            schema_version: "2".into(),
             overall_score: score,
             innovation_score: score,
             rigor_score: score,
+            scenario_score: Some(score),
             reference_value_score: score,
             venue_score: score,
             highlights: vec!["亮点明确。".into()],
@@ -200,5 +213,20 @@ mod tests {
         let restored = restore(&c, "p", edited.revision).unwrap();
         assert_eq!(restored.result.overall_score, 62);
         assert!(!restored.edited);
+    }
+
+    #[test]
+    fn reads_legacy_score_without_inventing_a_scenario_score() {
+        let db = Database::in_memory().unwrap();
+        let c = db.connection().unwrap();
+        c.execute("INSERT INTO papers(id,file_path,file_name,title,created_at,updated_at) VALUES('p','p','p','p','now','now')", []).unwrap();
+        c.execute(
+            "INSERT INTO paper_scores(paper_id,provider,model,generated_at,updated_at,revision,edited,result_json) VALUES('p','mock','m','now','now',0,0,?1)",
+            [r#"{"schema_version":"1","overall_score":62,"innovation_score":62,"rigor_score":62,"reference_value_score":62,"venue_score":62,"highlights":["亮点明确。"],"deficiencies":["证据范围有限。"],"keyword_scores":[]}"#],
+        ).unwrap();
+        let legacy = get(&c, "p").unwrap().unwrap();
+        assert_eq!(legacy.result.schema_version, "1");
+        assert_eq!(legacy.result.scenario_score, None);
+        assert_eq!(legacy.result.overall_score, 62);
     }
 }

@@ -1,6 +1,6 @@
 # Current release: v1.0.1 independent scoring and responsive workspace (2026-11-17)
 
-Accepted scope is released as v1.0.1: independent paper and keyword scoring with editable generated baselines; an 8% venue component in the overall score; strict internal score anchors; keyword-score sorting under a single-keyword filter; draggable library panes; resizable task/comparison surfaces; responsive buttons; explicit name/time/author sorting; and a right-collapsible task center. Database migration 11 and cache schema 3 preserve existing data and read older cache formats. Final release validation and GitHub synchronization are required before this section is considered published.
+Accepted scope is released as v1.0.1: independent paper and keyword scoring with editable generated baselines; separate and equally weighted mathematical-rigor and scenario-reasonableness dimensions; strict penalties when the physical scenario is weakly connected to the practical problem, simulation evidence or optimization variables; keyword-score sorting under a single-keyword filter; draggable library panes; resizable task/comparison surfaces; responsive buttons; explicit name/time/author sorting; and a right-collapsible task center. Database migration 11 and cache schema 3 preserve existing data and read older cache formats. This maintenance update does not change the application version, database schema or cache schema.
 
 # Current release: v1.0.0 initial launch (2026-11-15)
 

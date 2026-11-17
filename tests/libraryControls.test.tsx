@@ -12,6 +12,7 @@ import { sortPapers, type PaperSort } from "../src/features/library/paperSorting
 import { TaskCenter } from "../src/components/TaskProgress";
 import { progressService } from "../src/services/ProgressService";
 import type { Paper } from "../src/domain/paper/Paper";
+import { PaperList } from "../src/features/library/PaperList";
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT:boolean }).IS_REACT_ACT_ENVIRONMENT=true;
 afterEach(()=>{for(const task of progressService.snapshot()) if(task.status==="running") progressService.finish(task.id,"cancelled");progressService.clearFinished();});
@@ -39,10 +40,17 @@ describe("library controls",()=>{
     expect(ids("created-desc")).toEqual(["a","b","c"]);expect(ids("title-asc")).toEqual(["a","b","c"]);expect(ids("author-asc")).toEqual(["a","b","c"]);expect(ids("author-desc")).toEqual(["b","a","c"]);expect(source.map(item=>item.id)).toEqual(["b","a","c"]);
   });
   it("sorts a filtered keyword by its independent innovation score and keeps missing scores last",()=>{
-    const paper=(id:string,value?:number)=>({id,title:id,authors:[],created_at:"2026-01-01T00:00:00Z",file_name:`${id}.pdf`,file_path:id,tags:["ISAC"],analysis_status:"not_analyzed",updated_at:"2026-01-01T00:00:00Z",score:value===undefined?undefined:{schema_version:"1",overall_score:60,innovation_score:60,rigor_score:60,reference_value_score:60,venue_score:60,highlights:["亮点"],deficiencies:["缺陷"],keyword_scores:[{keyword:"ISAC",innovation_score:value}],provider:"mock",model:"mock",generated_at:"now",updated_at:"now",revision:0,edited:false}}) as Paper;
+    const paper=(id:string,value?:number)=>({id,title:id,authors:[],created_at:"2026-01-01T00:00:00Z",file_name:`${id}.pdf`,file_path:id,tags:["ISAC"],analysis_status:"not_analyzed",updated_at:"2026-01-01T00:00:00Z",score:value===undefined?undefined:{schema_version:"2",overall_score:60,innovation_score:60,rigor_score:60,scenario_score:60,reference_value_score:60,venue_score:60,highlights:["亮点"],deficiencies:["缺陷"],keyword_scores:[{keyword:"ISAC",innovation_score:value}],provider:"mock",model:"mock",generated_at:"now",updated_at:"now",revision:0,edited:false}}) as Paper;
     const source=[paper("medium",67),paper("missing"),paper("high",82),paper("low",51)];
     expect(sortPapers(source,"keyword-score-desc","ISAC").map(item=>item.id)).toEqual(["high","medium","low","missing"]);
     expect(sortPapers(source,"keyword-score-asc","ISAC").map(item=>item.id)).toEqual(["low","medium","high","missing"]);
+  });
+  it("shows scenario reasonableness separately and marks legacy scores for rescoring",async()=>{
+    const base={title:"Scored paper",authors:[] as string[],created_at:"2026-01-01T00:00:00Z",file_name:"p.pdf",file_path:"p.pdf",tags:[] as string[],analysis_status:"not_analyzed" as const,updated_at:"2026-01-01T00:00:00Z"};
+    const score={overall_score:60,innovation_score:61,rigor_score:62,reference_value_score:58,venue_score:55,highlights:["亮点"],deficiencies:["缺陷"],keyword_scores:[],provider:"mock",model:"mock",generated_at:"now",updated_at:"now",revision:0,edited:false};
+    const papers=[{...base,id:"current",score:{...score,schema_version:"2" as const,scenario_score:57}},{...base,id:"legacy",score:{...score,schema_version:"1" as const}}] as Paper[];
+    const container=document.createElement("div");const root=createRoot(container);
+    try {await act(async()=>root.render(<PaperList papers={papers} compareIds={new Set()} loading={false} onSelect={()=>{}} onToggleCompare={()=>{}}/>));const rows=container.querySelectorAll(".paper-row-score");expect(rows[0].textContent).toContain("场景 57");expect(rows[1].textContent).toContain("场景 待重评");}finally{await act(async()=>root.unmount());}
   });
   it("docks the collapsed task center at the right edge and expands on demand",async()=>{
     progressService.begin("library-sort","analysis","排序任务","处理中");

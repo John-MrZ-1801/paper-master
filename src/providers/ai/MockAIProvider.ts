@@ -57,7 +57,7 @@ export class MockAIProvider implements AIProvider {
     await delay(350);
     if (this.cancelled.delete(request.request_id)) throw new AppError({code:"AI_CANCELLED",message:"论文评分已取消。"});
     const now = new Date().toISOString();
-    return { schema_version:"1",overall_score:65,innovation_score:64,rigor_score:68,reference_value_score:63,venue_score:60,
+    return { schema_version:"2",overall_score:64,innovation_score:64,rigor_score:68,scenario_score:62,reference_value_score:63,venue_score:60,
       highlights:["问题定义清晰，方法流程便于复现。"],deficiencies:["验证范围较窄，尚不足以支持更强的普适性结论。"],keyword_scores:[],
       provider:"mock",model:"paper-master-mock-v1",generated_at:now,updated_at:now,revision:0,edited:false };
   }

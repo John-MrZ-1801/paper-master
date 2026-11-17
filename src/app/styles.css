@@ -569,6 +569,7 @@ button { max-width:100%; overflow-wrap:anywhere; }
 .paper-score-actions { display:flex; flex:none; justify-content:flex-end; gap:8px; }
 .paper-score-empty { display:grid; justify-items:center; gap:5px; margin-top:18px; padding:23px; border:1px dashed #cad6e9; border-radius:10px; background:rgba(255,255,255,.65); color:#71809a; text-align:center; }
 .paper-score-empty p { margin:0; color:#8b97aa; font-size:11.5px; line-height:1.65; }
+.paper-score-card .analysis-warning { margin:15px 0 0; padding:10px 12px; border:1px solid #ead9af; border-radius:8px; background:#fffaf0; color:#8a6a2d; font-size:11px; line-height:1.6; }
 .paper-score-summary { display:grid; grid-template-columns:145px minmax(0,1fr); gap:24px; align-items:center; margin-top:19px; }
 .overall-score { display:grid; grid-template-columns:auto auto; align-items:baseline; justify-content:center; padding:19px 13px; border:1px solid #d7e1f3; border-radius:12px; background:#fff; }
 .overall-score strong { color:#285bc5; font-size:44px; line-height:1; letter-spacing:-.05em; }
@@ -596,7 +597,7 @@ button { max-width:100%; overflow-wrap:anywhere; }
 .keyword-score-list strong { color:#315fc4; font-size:14px; }
 .paper-score-source { margin-top:13px; color:#98a2b1; font-size:9.5px; }
 .score-editor { display:grid; gap:14px; margin-top:18px; }
-.score-edit-grid { display:grid; grid-template-columns:repeat(5,minmax(90px,1fr)); gap:10px; }
+.score-edit-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:10px; }
 .score-editor label { display:grid; gap:6px; min-width:0; color:#5a6a83; font-size:11px; font-weight:650; }
 .score-editor input,.score-editor textarea { width:100%; min-width:0; padding:9px 10px; border:1px solid #bdcbe0; border-radius:7px; background:#fff; color:#34445d; font:inherit; font-weight:400; }
 .score-editor textarea { resize:vertical; line-height:1.6; }

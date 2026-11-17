@@ -63,8 +63,8 @@ impl AIProvider for MockAIProvider {
             _ = cancellation.cancelled() => Err(AppError::new(ErrorCode::AiCancelled, "AI scoring was cancelled.")),
             _ = tokio::time::sleep(std::time::Duration::from_millis(250)) => Ok(ProviderResponse {
                 value: PaperScoreResult {
-                    schema_version: "1".into(), overall_score: 65, innovation_score: 64,
-                    rigor_score: 68, reference_value_score: 63, venue_score: 60,
+                    schema_version: "2".into(), overall_score: 64, innovation_score: 64,
+                    rigor_score: 68, scenario_score: Some(62), reference_value_score: 63, venue_score: 60,
                     highlights: vec!["问题定义清晰，方法流程便于复现。".into()],
                     deficiencies: vec!["验证范围较窄，尚不足以支持更强的普适性结论。".into()],
                     keyword_scores: keywords.iter().enumerate().map(|(index, keyword)| KeywordInnovationScore { keyword: keyword.clone(), innovation_score: 61 + (index % 5) as u8 }).collect(),

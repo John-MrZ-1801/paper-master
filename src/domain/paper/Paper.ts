@@ -28,10 +28,11 @@ export interface KeywordInnovationScore {
 }
 
 export interface PaperScoreResult {
-  schema_version: "1";
+  schema_version: "1" | "2";
   overall_score: number;
   innovation_score: number;
   rigor_score: number;
+  scenario_score?: number;
   reference_value_score: number;
   venue_score: number;
   highlights: string[];

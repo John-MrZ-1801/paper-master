@@ -30,6 +30,8 @@ pub struct PaperScoreResult {
     pub overall_score: u8,
     pub innovation_score: u8,
     pub rigor_score: u8,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scenario_score: Option<u8>,
     pub reference_value_score: u8,
     pub venue_score: u8,
     pub highlights: Vec<String>,
@@ -44,10 +46,11 @@ impl PaperScoreResult {
     }
 
     pub fn calculated_overall(&self) -> u8 {
-        ((u16::from(self.innovation_score) * 37
-            + u16::from(self.rigor_score) * 32
-            + u16::from(self.reference_value_score) * 23
-            + u16::from(self.venue_score) * 8
+        ((u16::from(self.innovation_score) * 28
+            + u16::from(self.rigor_score) * 24
+            + u16::from(self.scenario_score.unwrap_or_default()) * 24
+            + u16::from(self.reference_value_score) * 18
+            + u16::from(self.venue_score) * 6
             + 50)
             / 100) as u8
     }

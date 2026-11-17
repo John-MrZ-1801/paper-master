@@ -74,8 +74,11 @@ describe("AI response schemas", () => {
   });
 
   it("validates strict paper and keyword scores independently from analysis",()=>{
-    const result=paperScoreSchema.parse({schema_version:"1",overall_score:65,innovation_score:64,rigor_score:68,reference_value_score:63,venue_score:60,highlights:["方法可复现。"],deficiencies:["验证范围有限。"],keyword_scores:[{keyword:"ISAC",innovation_score:58}],provider:"mock",model:"m",generated_at:"now",updated_at:"now",revision:0,edited:false});
+    const result=paperScoreSchema.parse({schema_version:"2",overall_score:64,innovation_score:64,rigor_score:68,scenario_score:62,reference_value_score:63,venue_score:60,highlights:["方法可复现。"],deficiencies:["验证范围有限。"],keyword_scores:[{keyword:"ISAC",innovation_score:58}],provider:"mock",model:"m",generated_at:"now",updated_at:"now",revision:0,edited:false});
     expect(result.keyword_scores[0].innovation_score).toBe(58);
+    expect(result.scenario_score).toBe(62);
+    expect(()=>paperScoreSchema.parse({...result,scenario_score:undefined})).toThrow();
+    expect(paperScoreSchema.parse({...result,schema_version:"1",scenario_score:undefined}).scenario_score).toBeUndefined();
     expect(()=>paperScoreSchema.parse({...result,venue_score:101})).toThrow();
     expect(()=>paperScoreSchema.parse({...result,deficiencies:[]})).toThrow();
   });

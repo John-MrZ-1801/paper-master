@@ -28,22 +28,37 @@ export const paperComparisonSchema = z.object({
 });
 
 const score = z.number().int().min(0).max(100);
-export const paperScoreResultSchema = z.object({
+const legacyPaperScoreResultSchema = z.object({
   schema_version: z.literal("1"),
   overall_score: score,
   innovation_score: score,
   rigor_score: score,
+  scenario_score: score.optional(),
   reference_value_score: score,
   venue_score: score,
   highlights: z.array(z.string().trim().min(1)).min(1).max(2),
   deficiencies: z.array(z.string().trim().min(1)).min(1).max(2),
   keyword_scores: z.array(z.object({ keyword: z.string().trim().min(1), innovation_score: score })),
 });
-
-export const paperScoreSchema = paperScoreResultSchema.extend({
-  provider: z.string(), model: z.string(), generated_at: z.string(), updated_at: z.string(),
-  revision: z.number().int().min(0), edited: z.boolean(),
+const currentPaperScoreResultSchema = z.object({
+  schema_version: z.literal("2"),
+  overall_score: score,
+  innovation_score: score,
+  rigor_score: score,
+  scenario_score: score,
+  reference_value_score: score,
+  venue_score: score,
+  highlights: z.array(z.string().trim().min(1)).min(1).max(2),
+  deficiencies: z.array(z.string().trim().min(1)).min(1).max(2),
+  keyword_scores: z.array(z.object({ keyword: z.string().trim().min(1), innovation_score: score })),
 });
+export const paperScoreResultSchema = z.union([legacyPaperScoreResultSchema,currentPaperScoreResultSchema]);
+
+const scoreMetadata = {provider:z.string(),model:z.string(),generated_at:z.string(),updated_at:z.string(),revision:z.number().int().min(0),edited:z.boolean()};
+export const paperScoreSchema = z.union([
+  legacyPaperScoreResultSchema.extend(scoreMetadata),
+  currentPaperScoreResultSchema.extend(scoreMetadata),
+]);
 
 export type PaperAnalysisResultV2 = z.infer<typeof paperAnalysisSchema>;
 export type PaperComparisonResult = z.infer<typeof paperComparisonSchema>;

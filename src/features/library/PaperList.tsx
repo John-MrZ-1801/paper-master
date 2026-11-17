@@ -34,7 +34,7 @@ export function PaperList({ papers, selectedId, compareIds, loading, onSelect, o
           <div className="paper-row-body">
             <h3 title={paper.title}>{paper.title}</h3>
             <div className="paper-venue" title={paper.publication_venue}>{paper.publication_venue?.trim() || "刊出主体未识别"}</div>
-            {paper.score&&<div className="paper-row-score"><strong>{paper.score.overall_score}</strong><span>/ 100 · 创新 {paper.score.innovation_score} · 严谨 {paper.score.rigor_score} · 参考 {paper.score.reference_value_score} · 刊会 {paper.score.venue_score}</span></div>}
+            {paper.score&&<div className="paper-row-score"><strong>{paper.score.overall_score}</strong><span>/ 100 · 创新 {paper.score.innovation_score} · 数理 {paper.score.rigor_score} · 场景 {paper.score.scenario_score??"待重评"} · 参考 {paper.score.reference_value_score} · 刊会 {paper.score.venue_score}</span></div>}
             <div className="paper-byline" title={formatAuthors(paper.authors)}>{paper.authors.length ? formatAuthors(paper.authors) : "作者信息未识别"}</div>
             {paper.tags.length > 0 && <div className="row-tags">{paper.tags.slice(0, 3).map((tag) => <span key={tag}>{tag}</span>)}</div>}
             <div className="paper-row-footer"><Status paper={paper}/><time>{formatDate(paper.created_at)}</time></div>

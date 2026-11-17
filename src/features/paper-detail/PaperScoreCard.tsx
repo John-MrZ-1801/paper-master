@@ -14,10 +14,11 @@ interface Props {
 }
 
 const scoreFields = [
-  ["innovation_score", "创新性", "37%"],
-  ["rigor_score", "严谨性", "32%"],
-  ["reference_value_score", "参考价值", "23%"],
-  ["venue_score", "期刊 / 会议档次", "8%"],
+  ["innovation_score", "创新性", "28%"],
+  ["rigor_score", "数理严谨性", "24%"],
+  ["scenario_score", "场景合理性", "24%"],
+  ["reference_value_score", "参考价值", "18%"],
+  ["venue_score", "期刊 / 会议档次", "6%"],
 ] as const;
 
 function scoreValue(value:string){const parsed=Number(value);return Number.isFinite(parsed)?Math.max(0,Math.min(100,Math.round(parsed))):0;}
@@ -30,14 +31,15 @@ export function PaperScoreCard({paper,service,scoring,requestId,onScore,onCancel
   const score=paper.score;
   const perform=async(action:()=>Promise<unknown>)=>{setBusy(true);setError(undefined);try{await action();setDraft(undefined);onChanged();}catch(error){setError(error instanceof Error?error.message:String(error));}finally{setBusy(false);}};
   return <section className={`paper-score-card ${score?"has-score":"empty-score"}`} aria-labelledby="paper-score-heading">
-    <div className="paper-score-heading"><div><span className="eyebrow">INDEPENDENT AI REVIEW</span><h2 id="paper-score-heading">论文评分</h2><p>评分与论文解析分开生成；AI 总分按创新性 37%、严谨性 32%、参考价值 23%、期刊 / 会议档次 8% 计算。</p></div>
-      <div className="paper-score-actions">{scoring?<button className="button secondary" onClick={onCancel}>取消评分</button>:<button className="button primary" onClick={onScore}>{score?"重新评分":"AI 评分"}</button>}{score&&!draft&&<button className="button secondary" disabled={busy} onClick={()=>setDraft({schema_version:"1",overall_score:score.overall_score,innovation_score:score.innovation_score,rigor_score:score.rigor_score,reference_value_score:score.reference_value_score,venue_score:score.venue_score,highlights:[...score.highlights],deficiencies:[...score.deficiencies],keyword_scores:score.keyword_scores.map(item=>({...item}))})}>人工修改</button>}{score?.edited&&!draft&&<button className="button secondary" disabled={busy} onClick={()=>void perform(()=>service.restore(paper))}>恢复 AI 原始评分</button>}</div>
+    <div className="paper-score-heading"><div><span className="eyebrow">INDEPENDENT AI REVIEW</span><h2 id="paper-score-heading">论文评分</h2><p>评分与论文解析分开生成；AI 总分按创新性 28%、数理严谨性 24%、场景合理性 24%、参考价值 18%、期刊 / 会议档次 6% 计算。</p></div>
+      <div className="paper-score-actions">{scoring?<button className="button secondary" onClick={onCancel}>取消评分</button>:<button className="button primary" onClick={onScore}>{score?"重新评分":"AI 评分"}</button>}{score&&!draft&&<button className="button secondary" disabled={busy} onClick={()=>setDraft({schema_version:"2",overall_score:score.overall_score,innovation_score:score.innovation_score,rigor_score:score.rigor_score,scenario_score:score.scenario_score??0,reference_value_score:score.reference_value_score,venue_score:score.venue_score,highlights:[...score.highlights],deficiencies:[...score.deficiencies],keyword_scores:score.keyword_scores.map(item=>({...item}))})}>人工修改</button>}{score?.edited&&!draft&&<button className="button secondary" disabled={busy} onClick={()=>void perform(()=>service.restore(paper))}>恢复 AI 原始评分</button>}</div>
     </div>
-    {scoring&&<InlineTaskProgress id={requestId} fallback="正在独立评估论文与关键词创新性。"/>}
+    {scoring&&<InlineTaskProgress id={requestId} fallback="正在评估论文的创新、数理严谨性、场景合理性与关键词创新性。"/>}
     {error&&<p className="analysis-error" role="alert">{error}</p>}
-    {!score&&!scoring&&<div className="paper-score-empty"><strong>尚未评分</strong><p>点击“AI 评分”生成论文总分、三个分项、关键词创新分以及最重要的亮点与缺陷。</p></div>}
+    {!score&&!scoring&&<div className="paper-score-empty"><strong>尚未评分</strong><p>点击“AI 评分”生成论文总分、五个分项、关键词创新分以及最重要的亮点与缺陷。</p></div>}
     {score&&!draft&&<>
-      <div className="paper-score-summary"><div className="overall-score"><strong>{score.overall_score}</strong><span>/ 100</span><small>{score.edited?"人工修订总分":"AI 综合总分"}</small></div><div className="score-dimensions">{scoreFields.map(([key,label,weight])=><div key={key}><span>{label}<small>{weight}</small></span><strong>{score[key]}</strong><i><b style={{width:`${score[key]}%`}}/></i></div>)}</div></div>
+      {score.scenario_score===undefined&&<p className="analysis-warning">此评分来自旧评分结构，尚未评估场景合理性；请点击“重新评分”补齐该项并按新权重计算总分。</p>}
+      <div className="paper-score-summary"><div className="overall-score"><strong>{score.overall_score}</strong><span>/ 100</span><small>{score.edited?"人工修订总分":"AI 综合总分"}</small></div><div className="score-dimensions">{scoreFields.map(([key,label,weight])=>{const value=score[key];return <div key={key}><span>{label}<small>{weight}</small></span><strong>{value??"待重评"}</strong><i><b style={{width:`${value??0}%`}}/></i></div>;})}</div></div>
       <div className="score-review-grid"><div><h3>最重要的亮点</h3><ul>{score.highlights.map((item,index)=><li key={index}>{item}</li>)}</ul></div><div className="score-deficiencies"><h3>最重要的缺陷</h3><ul>{score.deficiencies.map((item,index)=><li key={index}>{item}</li>)}</ul></div></div>
       <div className="keyword-score-block"><div><h3>关键词创新分</h3><span>独立于论文总分</span></div>{score.keyword_scores.length?<div className="keyword-score-list">{score.keyword_scores.map(item=><span key={item.keyword}><em>{item.keyword}</em><strong>{item.innovation_score}</strong></span>)}</div>:<p>这篇论文当前没有可评分的关键词；完成论文分析或补充关键词后可重新评分。</p>}</div>
       <footer className="paper-score-source">{score.provider}{score.model?` · ${score.model}`:""} · {new Date(score.updated_at).toLocaleString("zh-CN")}{score.edited?` · 人工修订 ${score.revision} 次`:""}</footer>

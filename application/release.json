@@ -3,8 +3,8 @@
   "platform": "windows-x64",
   "entrypoint": "application/paper-master.exe",
   "launcher": "启动paper-master.cmd",
-  "bytes": 19823616,
-  "sha256": "fab3a15432f58a887e7e00533f34dbabaddbc9337b9e4e74923642767d990f68",
+  "bytes": 19841536,
+  "sha256": "a7344b7002ac7d1363d78d8a8e5f51c2c0c9b939a1d1eda9d5557318b7519e27",
   "runtime": "Microsoft Edge WebView2 (installed separately)",
   "personal_data_included": false
 }

@@ -7,6 +7,10 @@ import { normalizeAppError } from "../types/errors";
 import { createOperationId } from "./PaperService";
 import { progressService } from "./ProgressService";
 
+function calculatedOverall(result:PaperScoreResult){
+  return Math.round(result.innovation_score*.28+result.rigor_score*.24+(result.scenario_score??0)*.24+result.reference_value_score*.18+result.venue_score*.06);
+}
+
 export class ScoringService {
   constructor(private provider:AIProvider,private readonly repository:PaperRepository) {}
   setProvider(provider:AIProvider){this.provider=provider;}
@@ -34,7 +38,8 @@ export class ScoringService {
   async edit(paper:Paper,result:PaperScoreResult):Promise<PaperScore>{
     if(isTauriRuntime()) return paperScoreSchema.parse(await invokeCommand("edit_paper_score",{paperId:paper.id,revision:paper.score?.revision??0,result}));
     if(!paper.score)throw new Error("请先生成评分。");
-    const score={...result,provider:paper.score.provider,model:paper.score.model,generated_at:paper.score.generated_at,updated_at:new Date().toISOString(),revision:paper.score.revision+1,edited:true};
+    if(result.scenario_score===undefined)throw new Error("请先填写场景合理性评分。");
+    const score={...result,schema_version:"2" as const,overall_score:calculatedOverall(result),provider:paper.score.provider,model:paper.score.model,generated_at:paper.score.generated_at,updated_at:new Date().toISOString(),revision:paper.score.revision+1,edited:true};
     await this.repository.update({...paper,score});return score;
   }
 
