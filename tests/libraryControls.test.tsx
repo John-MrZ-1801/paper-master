@@ -1,15 +1,20 @@
 // @vitest-environment jsdom
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { describe,it,expect } from "vitest";
+import { afterEach,describe,it,expect } from "vitest";
 import { Sidebar } from "../src/components/Sidebar";
 import { InMemoryPaperRepository } from "../src/repositories/InMemoryPaperRepository";
 import { analysisVersionLabel } from "../src/domain/paper/AnalysisSource";
 import type { AnalysisVersion } from "../src/services/AnalysisVersionsService";
 import { RelationshipGraphPage } from "../src/pages/RelationshipGraphPage";
 import type { RelationshipGraphService } from "../src/services/RelationshipGraphService";
+import { sortPapers, type PaperSort } from "../src/features/library/paperSorting";
+import { TaskCenter } from "../src/components/TaskProgress";
+import { progressService } from "../src/services/ProgressService";
+import type { Paper } from "../src/domain/paper/Paper";
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT:boolean }).IS_REACT_ACT_ENVIRONMENT=true;
+afterEach(()=>{for(const task of progressService.snapshot()) if(task.status==="running") progressService.finish(task.id,"cancelled");progressService.clearFinished();});
 
 describe("library controls",()=>{
   it("keeps all keyword checkboxes visible and supports intersecting multiple tags",async()=>{
@@ -26,6 +31,17 @@ describe("library controls",()=>{
     expect(analysisVersionLabel({...v,provider:"codex",model:"Codex CLI default"})).toContain("具体模型未记录");
     expect(analysisVersionLabel({...v,provider:"extractive"})).toContain("原文摘录（非模型）");
     expect(analysisVersionLabel({...v,provider:"legacy"})).toContain("总结时间未记录");
+  });
+  it("sorts papers by added time, name, and first author without mutating the source list",()=>{
+    const paper=(id:string,title:string,author:string,created_at:string)=>({id,title,authors:author?[author]:[],created_at,file_name:`${id}.pdf`,file_path:id,tags:[],analysis_status:"not_analyzed",updated_at:created_at}) as Paper;
+    const source=[paper("b","Beta","Zhang","2026-01-02T00:00:00Z"),paper("a","Alpha","Alice","2026-01-03T00:00:00Z"),paper("c","Gamma","","2026-01-01T00:00:00Z")];
+    const ids=(sort:PaperSort)=>sortPapers(source,sort).map(item=>item.id);
+    expect(ids("created-desc")).toEqual(["a","b","c"]);expect(ids("title-asc")).toEqual(["a","b","c"]);expect(ids("author-asc")).toEqual(["a","b","c"]);expect(ids("author-desc")).toEqual(["b","a","c"]);expect(source.map(item=>item.id)).toEqual(["b","a","c"]);
+  });
+  it("docks the collapsed task center at the right edge and expands on demand",async()=>{
+    progressService.begin("library-sort","analysis","排序任务","处理中");
+    const container=document.createElement("div");const root=createRoot(container);
+    try {await act(async()=>root.render(<TaskCenter/>));const center=container.querySelector(".task-center")!;expect(center.classList.contains("collapsed")).toBe(true);expect(center.querySelector(".task-center-content")).toBeNull();await act(async()=>center.querySelector<HTMLButtonElement>(".task-center-toggle")!.click());expect(center.classList.contains("expanded")).toBe(true);expect(center.querySelector(".task-center-content")).not.toBeNull();}finally{await act(async()=>root.unmount());}
   });
   it("changes node positions without scaling text on zoom",async()=>{
     const graph={mode:"keywords",nodes:[{id:"tag:a",label:"ISAC",kind:"keyword",value:3,paperIds:[],x:650,y:400,color:"#4468d8"}],edges:[],totalPapers:1,taggedPapers:1,omittedNodes:0,omittedEdges:0};

@@ -6,6 +6,7 @@ import { Toast, type ToastMessage } from "../components/Toast";
 import type { LibraryFilter, Paper } from "../domain/paper/Paper";
 import { LibraryToolbar } from "../features/library/LibraryToolbar";
 import { PaperList } from "../features/library/PaperList";
+import { sortPapers, type PaperSort } from "../features/library/paperSorting";
 import { PaperDetail } from "../features/paper-detail/PaperDetail";
 import { ComparisonDialog } from "../features/comparison/ComparisonDialog";
 import type { PaperComparisonResult } from "../domain/ai/types";
@@ -33,6 +34,7 @@ export function App({ services = defaultServices }: { services?: ApplicationServ
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [allPapers, setAllPapers] = useState<Paper[]>([]);
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<PaperSort>("created-desc");
   const [papers, setPapers] = useState<Paper[]>([]);
   const [selectedId, setSelectedId] = useState<string>();
   const [compareIds, setCompareIds] = useState<Set<string>>(new Set());
@@ -67,7 +69,7 @@ export function App({ services = defaultServices }: { services?: ApplicationServ
       setAllPapers(library);
       setPapers(result);
       if (services.tauri) void libraryCache.status().then(status => setCacheWarning(status.last_error || (status.unreadable ? `${status.unreadable} 份论文缓存需要核对，请打开 Diagnostics 查看。` : ""))).catch(() => undefined);
-      setSelectedId((current) => result.some((paper) => paper.id === current) ? current : result[0]?.id);
+      setSelectedId((current) => result.some((paper) => paper.id === current) ? current : undefined);
     } catch (error) {
       const appError = normalizeAppError(error);
       notify("error", "Library could not be loaded", appError.message);
@@ -102,6 +104,8 @@ export function App({ services = defaultServices }: { services?: ApplicationServ
   }, [loadPapers]);
 
   const selected = papers.find((paper) => paper.id === selectedId);
+  const sortedPapers = useMemo(() => sortPapers(papers, sort), [papers, sort]);
+  useEffect(() => { setSelectedId((current) => current && sortedPapers.some((paper) => paper.id === current) ? current : sortedPapers[0]?.id); }, [sortedPapers]);
   useEffect(() => {
     let active = true;
     setAuthorContext(undefined); setAuthorError(undefined);
@@ -242,11 +246,11 @@ export function App({ services = defaultServices }: { services?: ApplicationServ
       <Sidebar onResumeComparison={comparisonRequestId && comparisonPapers.length >= 2 ? () => setComparisonOpen(true) : undefined} comparing={comparing} view={view} filter={filter} tags={tags} activeTags={selectedTags} onlineMode={onlineMode} onView={setView} onFilter={setFilter} onTag={tag => setSelectedTags(current => current.includes(tag) ? current.filter(value => value !== tag) : [...current, tag])} onClearTags={() => setSelectedTags([])}/>
       <KeepAliveView active={view === "library"} name="library"><div className="library-layout">
         <section className="library-column">
-          <LibraryToolbar onFillMissing={services.tauri ? async () => { try { const result = await services.paperService.queueMissing(papers.map(paper => paper.id)); await loadPapers(true); notify("success", `已加入分析队列 ${result.queued} 篇`, `已有结果/任务跳过 ${result.skipped} 篇，无可读文字 ${result.no_text} 篇。使用 Settings 中保存的服务，可关闭后续跑。`); } catch (error) { notify("error", "补齐未开始", normalizeAppError(error).message); } } : undefined} search={search} compareCount={compareIds.size} loading={loading} onSearch={setSearch} onImportPdf={() => void importPapers(false)} onImportFolder={() => void importPapers(true)} onCompare={() => void compareSelected()}/>
+          <LibraryToolbar onFillMissing={services.tauri ? async () => { try { const result = await services.paperService.queueMissing(papers.map(paper => paper.id)); await loadPapers(true); notify("success", `已加入分析队列 ${result.queued} 篇`, `已有结果/任务跳过 ${result.skipped} 篇，无可读文字 ${result.no_text} 篇。使用 Settings 中保存的服务，可关闭后续跑。`); } catch (error) { notify("error", "补齐未开始", normalizeAppError(error).message); } } : undefined} search={search} sort={sort} compareCount={compareIds.size} loading={loading} onSearch={setSearch} onSort={setSort} onImportPdf={() => void importPapers(false)} onImportFolder={() => void importPapers(true)} onCompare={() => void compareSelected()}/>
           {cacheWarning && <div className="library-import-progress" role="alert"><p>{cacheWarning}</p><button className="button secondary" onClick={() => setView("diagnostics")}>查看论文缓存</button></div>}
           {importRequestId && <div className="library-import-progress"><InlineTaskProgress id={importRequestId}/></div>}
           {(filter !== "all" || selectedTags.length > 0) && <div className="active-filter"><span>Showing {selectedTags.length ? `同时包含：${selectedTags.join("、")}` : filter === "recent" ? "recently added" : "AI analyzed"}</span><button onClick={() => { setSelectedTags([]); setFilter("all"); }}>Clear</button></div>}
-          <PaperList papers={papers} selectedId={selectedId} compareIds={compareIds} loading={loading} onSelect={setSelectedId} onToggleCompare={toggleCompare}/>
+          <PaperList papers={sortedPapers} selectedId={selectedId} compareIds={compareIds} loading={loading} onSelect={setSelectedId} onToggleCompare={toggleCompare}/>
           <footer className="library-count">{papers.length} paper{papers.length === 1 ? "" : "s"}</footer>
         </section>
         <PaperDetail onSaveMetadata={async metadata=>{if(selected){await services.paperService.editMetadata(selected.id,metadata);await loadPapers(true);}}} versionsService={services.analysisVersionsService} onChanged={() => void loadPapers(true)} requestId={analyzingId === selected?.id ? activeRequestId : undefined} paper={selected} authorContext={authorContext} authorError={authorError} onSelectRelated={(id) => { setSearch(""); setSelectedTags([]); setFilter("all"); setSelectedId(id); }} onRelink={() => void relinkSelected()} analyzing={!!selected && (analyzingId === selected.id || ["queued", "analyzing"].includes(selected.analysis_status))} onAnalyze={() => void analyzeSelected()} onCancel={() => void cancelAnalysis()} onOpen={() => void openSelected()} onDelete={() => void deleteSelected()}/>

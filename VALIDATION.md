@@ -1,3 +1,11 @@
+# 未发布维护验证（2026-11-17）
+
+- 前端：`pnpm test` 9 个测试文件、38 项全部通过；新增回归覆盖时间/名称/第一作者排序、不修改原列表及任务中心右侧收缩/展开。`pnpm build` 通过，Vite 生产构建转换 154 个模块。
+- 后端：`cargo test --locked --manifest-path src-tauri/Cargo.toml` 在正常权限下 93 项通过、0 失败、7 项真实外部服务测试 ignored。受限沙箱首次有 6 项本机模拟 HTTP 测试因回环端口被禁止而失败；正常权限重跑全部通过，不是产品断言回归。
+- Windows 产物：`scripts/Build-Local.ps1 -NoInstaller` 退出码 0，重跑前后端全部检查并生成 release EXE。`application/paper-master.exe` 为 19,495,936 字节，SHA-256 为 `d62d1de355d0d8cf29da85d82414930efed48d89df756fad2339e0138b573ece`；`release.json` 与 `SHA256SUMS.txt` 已同步。未构建安装器，版本号保持 1.0.0。
+- 隐私检查：已扫描 Git 跟踪路径、待提交文本、邮箱、本机绝对路径、常见令牌/私钥前缀和字面凭据赋值。未发现个人路径、真实密钥、论文、数据库、缓存或凭据文件；源码命中仅为测试占位值与示例邮箱。新 EXE 对个人用户/检出路径和私钥前缀无命中；宽泛字节扫描的“邮箱”与 `nthu` 命中分别是随机二进制片段和第三方字形名 `phinthuthai`，不是联系方式或单位端点。
+- 视觉验证限制：本地 Vite 服务成功启动，但 Codex 内置浏览器后端不可用，Windows 浏览器启动又因应用控制授权超时未完成，因此不宣称截图级验收。组件交互回归、TypeScript 检查和生产构建已通过。
+
 # v1.0.0 初步上线版验证（2026-11-16）
 
 - 版本一致性：`scripts/Check-Version.ps1` 通过，npm、Cargo、Tauri、应用内版本及 `Cargo.lock` 均为 `1.0.0`。

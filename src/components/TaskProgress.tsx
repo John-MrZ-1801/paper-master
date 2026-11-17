@@ -24,8 +24,9 @@ export function TaskCenter() {
   const active = tasks.filter(task => task.status === "running");
   const failed = tasks.filter(task => task.status === "failed");
   if (!tasks.length) return null;
-  return <aside className={`task-center ${expanded ? "expanded" : ""}`} aria-label="任务进度中心">
-    <button className="task-center-toggle" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}><span className={active.length ? "mini-spinner" : failed.length ? "task-failure" : "task-check"}>{active.length ? "" : failed.length ? "!" : "✓"}</span><strong>{active.length ? `${active.length} 项任务进行中` : failed.length ? `${failed.length} 项任务失败` : "任务已结束"}</strong><span>{expanded ? "收起" : "查看进度"}</span></button>
+  const summary = active.length ? `${active.length} 项任务进行中` : failed.length ? `${failed.length} 项任务失败` : "任务已结束";
+  return <aside className={`task-center ${expanded ? "expanded" : "collapsed"}`} aria-label="任务进度中心">
+    <button className="task-center-toggle" aria-expanded={expanded} aria-label={expanded ? `收起任务中心：${summary}` : `展开任务中心：${summary}`} title={expanded ? "收起到右侧" : summary} onClick={() => setExpanded(!expanded)}><span className={active.length ? "mini-spinner" : failed.length ? "task-failure" : "task-check"}>{active.length ? "" : failed.length ? "!" : "✓"}</span><strong className="task-center-summary">{summary}</strong><span className="task-center-action">{expanded ? "收起到右侧" : "任务"}</span></button>
     {expanded && <div className="task-center-content">{[...active,...tasks.filter(task => task.status !== "running")].map(task => <TaskProgressBar key={task.id} task={task} compact/>)}<button className="text-button" onClick={() => progressService.clearFinished()}>清除已结束任务</button></div>}
   </aside>;
 }
